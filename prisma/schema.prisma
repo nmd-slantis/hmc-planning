@@ -1,0 +1,19 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ManualData {
+  id          String    @id        // "odoo-{id}" or "hubspot-{id}"
+  source      String               // "odoo" | "hubspot"
+  sourceId    String
+  effort      Float?
+  startDate   DateTime?            // Hubspot deals only
+  endDate     DateTime?            // Hubspot deals only
+  monthlyData String    @default("{}") // JSON: { "aug-25": 80, "sep-25": 172, ... } hours only
+  updatedAt   DateTime  @updatedAt
+}

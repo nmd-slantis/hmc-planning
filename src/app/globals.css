@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --slantis-orange: #FF7700;
+  --slantis-black: #202022;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  color: #202022;
+  background-color: #f5f5f5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Editable cell hover highlight */
+.editable-cell:hover {
+  outline: 1.5px solid #FF7700;
+  border-radius: 3px;
+  cursor: pointer;
+}
