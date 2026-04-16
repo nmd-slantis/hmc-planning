@@ -126,7 +126,7 @@ export async function buildCapacityRows(): Promise<CapacityRow[]> {
       startDate,
       endDate,
       effort: manual?.effort ?? null,
-      so: null,
+      so: d.properties.sales_order ?? null,
       monthlyData: manual?.monthlyData ?? {},
       status: computeStatus(startDate, endDate),
       hsPipeline,
