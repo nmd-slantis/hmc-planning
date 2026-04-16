@@ -135,7 +135,7 @@ export function CapacityTable({ initialRows }: CapacityTableProps) {
                     colSpan={2}
                     className={`px-2 py-2 text-[11px] whitespace-nowrap ${
                       i === 0
-                        ? "border-l-2 border-gray-400"
+                        ? "border-l-2 border-gray-500"
                         : m.quarterStart
                         ? "border-l-2 border-gray-500"
                         : "border-l border-gray-700"
