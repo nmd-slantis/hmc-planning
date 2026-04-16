@@ -67,6 +67,16 @@ export async function PATCH(
     data.effort = existing.effort;
   }
 
+  if (body.soldHrs !== undefined) {
+    data.soldHrs =
+      body.soldHrs === "" || body.soldHrs === null ? null : Number(body.soldHrs);
+  } else if (existing?.soldHrs !== undefined) {
+    data.soldHrs = existing.soldHrs;
+  }
+
+  // Always preserve the seed flag so manual edits don't reset it
+  data.soSeeded = existing?.soSeeded ?? false;
+
   if (body.startDate !== undefined) {
     data.startDate = body.startDate ? new Date(body.startDate) : null;
   } else if (existing?.startDate !== undefined) {

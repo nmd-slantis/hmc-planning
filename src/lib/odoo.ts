@@ -88,3 +88,38 @@ export function extractSoNumber(project: OdooProject): string | null {
   }
   return null;
 }
+
+export interface OdooSoData {
+  id: number;
+  x_studio_sold_hours: number | false | null;
+  x_studio_project_start_date: string | false | null;
+  x_studio_project_end_date: string | false | null;
+}
+
+export async function fetchOdooSoDetails(soIds: number[]): Promise<Map<number, OdooSoData>> {
+  if (!soIds.length) return new Map();
+  const uid = await authenticate();
+  const res = await fetch(`${process.env.ODOO_URL}/web/dataset/call_kw`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0", method: "call", id: 3,
+      params: {
+        model: "sale.order",
+        method: "search_read",
+        args: [[["id", "in", soIds]]],
+        kwargs: {
+          fields: ["id", "x_studio_sold_hours", "x_studio_project_start_date", "x_studio_project_end_date"],
+          uid,
+          context: { lang: "en_US", tz: "UTC" },
+        },
+      },
+    }),
+    next: { revalidate: 300 },
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(`Odoo SO RPC error: ${JSON.stringify(json.error)}`);
+  const map = new Map<number, OdooSoData>();
+  for (const so of (json.result ?? []) as OdooSoData[]) map.set(so.id, so);
+  return map;
+}

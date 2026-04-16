@@ -18,6 +18,8 @@ model ManualData {
   startDate   DateTime?            // Hubspot deals only
   endDate     DateTime?            // Hubspot deals only
   monthlyData String    @default("{}") // JSON: { "aug-25": 80, ... } hours only
+  soldHrs     Float?
+  soSeeded    Boolean   @default(false)
   updatedAt   DateTime  @updatedAt
 }
 

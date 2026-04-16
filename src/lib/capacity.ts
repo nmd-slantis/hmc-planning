@@ -1,4 +1,4 @@
-import { fetchOdooProjects, extractSoNumber } from "./odoo";
+import { fetchOdooProjects, fetchOdooSoDetails, extractSoNumber } from "./odoo";
 import { fetchHubspotDeals } from "./hubspot";
 import { prisma } from "./prisma";
 import type { CapacityRow, RowStatus } from "@/types/capacity";
@@ -80,13 +80,108 @@ export async function buildCapacityRows(): Promise<CapacityRow[]> {
     ])
   );
 
+  // ── Seed SO data for unseeded Odoo projects ──────────────────────────────
+  try {
+    // Collect projects that have a sale_order_id and haven't been seeded yet
+    const unseeded = odooProjects.filter(
+      (p) =>
+        Array.isArray(p.sale_order_id) &&
+        !manualMap.get(`odoo-${p.id}`)?.soSeeded
+    );
+
+    if (unseeded.length > 0) {
+      const soIds = unseeded.map((p) => (p.sale_order_id as [number, string])[0]);
+      const soDetails = await fetchOdooSoDetails(soIds);
+
+      for (const p of unseeded) {
+        const rowId = `odoo-${p.id}`;
+        const soId = (p.sale_order_id as [number, string])[0];
+        const so = soDetails.get(soId);
+        if (!so) continue;
+
+        const existing = manualMap.get(rowId);
+
+        const soldHrs =
+          typeof so.x_studio_sold_hours === "number"
+            ? so.x_studio_sold_hours
+            : existing?.soldHrs ?? null;
+
+        // Only set dates if not already manually set
+        const startDate =
+          existing?.startDate !== undefined && existing.startDate !== null
+            ? existing.startDate
+            : so.x_studio_project_start_date
+            ? new Date(isoDate(so.x_studio_project_start_date) as string)
+            : existing?.startDate ?? null;
+
+        const endDate =
+          existing?.endDate !== undefined && existing.endDate !== null
+            ? existing.endDate
+            : so.x_studio_project_end_date
+            ? new Date(isoDate(so.x_studio_project_end_date) as string)
+            : existing?.endDate ?? null;
+
+        const upsertData = {
+          id: rowId,
+          source: "odoo",
+          sourceId: String(p.id),
+          soSeeded: true,
+          soldHrs,
+          startDate,
+          endDate,
+          effort: existing?.effort ?? null,
+          monthlyData: existing
+            ? JSON.stringify(existing.monthlyData)
+            : "{}",
+        };
+
+        await prisma.manualData.upsert({
+          where: { id: rowId },
+          create: upsertData,
+          update: upsertData,
+        });
+
+        // Update in-memory map so rows built below see seeded values
+        manualMap.set(rowId, {
+          ...(existing ?? {
+            id: rowId,
+            source: "odoo",
+            sourceId: String(p.id),
+            effort: null,
+            updatedAt: new Date(),
+            monthlyData: {},
+          }),
+          soSeeded: true,
+          soldHrs,
+          startDate,
+          endDate,
+        } as typeof existing & { soSeeded: boolean; soldHrs: number | null; startDate: Date | null; endDate: Date | null; monthlyData: Record<string, number> });
+      }
+    }
+  } catch (e) {
+    console.error("SO seeding failed (non-fatal):", e);
+  }
+  // ────────────────────────────────────────────────────────────────────────
+
   const rows: CapacityRow[] = [];
 
   for (const p of odooProjects) {
     const id = `odoo-${p.id}`;
     const manual = manualMap.get(id);
-    const startDate = isoDate(p.date_start);
-    const endDate = isoDate(p.date);
+
+    // Use manual dates (seeded or manually set) falling back to Odoo project dates
+    const startDate =
+      manual?.startDate
+        ? (manual.startDate instanceof Date
+            ? manual.startDate.toISOString().substring(0, 10)
+            : String(manual.startDate).substring(0, 10))
+        : isoDate(p.date_start);
+    const endDate =
+      manual?.endDate
+        ? (manual.endDate instanceof Date
+            ? manual.endDate.toISOString().substring(0, 10)
+            : String(manual.endDate).substring(0, 10))
+        : isoDate(p.date);
 
     const status = computeStatus(startDate, endDate);
     rows.push({
@@ -96,6 +191,7 @@ export async function buildCapacityRows(): Promise<CapacityRow[]> {
       startDate,
       endDate,
       effort: manual?.effort ?? null,
+      soldHrs: manual?.soldHrs ?? null,
       so: extractSoNumber(p),
       monthlyData: manual?.monthlyData ?? {},
       status,
@@ -111,10 +207,14 @@ export async function buildCapacityRows(): Promise<CapacityRow[]> {
 
     // Dates for HubSpot deals come from manual data only
     const startDate = manual?.startDate
-      ? manual.startDate.toISOString().substring(0, 10)
+      ? (manual.startDate instanceof Date
+          ? manual.startDate.toISOString().substring(0, 10)
+          : String(manual.startDate).substring(0, 10))
       : null;
     const endDate = manual?.endDate
-      ? manual.endDate.toISOString().substring(0, 10)
+      ? (manual.endDate instanceof Date
+          ? manual.endDate.toISOString().substring(0, 10)
+          : String(manual.endDate).substring(0, 10))
       : null;
 
     const hsPipeline = d.properties.pipeline ?? null;
@@ -126,6 +226,7 @@ export async function buildCapacityRows(): Promise<CapacityRow[]> {
       startDate,
       endDate,
       effort: manual?.effort ?? null,
+      soldHrs: manual?.soldHrs ?? null,
       so: d.properties.sales_order ?? null,
       monthlyData: manual?.monthlyData ?? {},
       status: computeStatus(startDate, endDate),

@@ -26,6 +26,16 @@ const SOURCE_BADGE: Record<string, { bg: string; label: string }> = {
   hubspot: { bg: "bg-orange-100 text-orange-700", label: "HS"   },
 };
 
+function effortDot(effortHrs: number, soldHrs: number | null): React.ReactNode {
+  if (soldHrs === null || soldHrs === 0) return null;
+  const ratio = Math.abs(effortHrs - soldHrs) / soldHrs;
+  let color: string;
+  if (ratio <= 0.05) color = "bg-green-500";
+  else if (ratio <= 0.15) color = "bg-yellow-400";
+  else color = "bg-red-500";
+  return <span className={`inline-block w-1.5 h-1.5 rounded-full ${color} mr-1 flex-shrink-0`} />;
+}
+
 export function ProjectRow({ initialRow }: ProjectRowProps) {
   const [row, setRow] = useState<CapacityRow>(initialRow);
 
@@ -40,6 +50,12 @@ export function ProjectRow({ initialRow }: ProjectRowProps) {
 
   const rowClass = GROUP_ROW_CLASS[row.group] ?? "bg-white border-gray-100";
   const badge = SOURCE_BADGE[row.source];
+
+  // Compute total effort hours from monthly data
+  const effortHrs = Object.values(row.monthlyData).reduce(
+    (sum, h) => sum + (h || 0),
+    0
+  );
 
   return (
     <tr className={`border-b ${rowClass} hover:brightness-[0.97] transition-all text-xs`}>
@@ -57,31 +73,33 @@ export function ProjectRow({ initialRow }: ProjectRowProps) {
         </span>
       </td>
 
-      {/* Start date */}
+      {/* Start date — editable for ALL rows */}
       <td className="px-2 py-1 whitespace-nowrap">
-        {row.source === "hubspot" ? (
-          <EditableCell rowId={row.id} field="startDate" value={row.startDate} type="date"
-            onSaved={(v) => updateField("startDate", v as string | null)} className="text-gray-700" />
-        ) : (
-          <span className="text-gray-600 px-1">{row.startDate ?? "—"}</span>
-        )}
+        <EditableCell rowId={row.id} field="startDate" value={row.startDate} type="date"
+          onSaved={(v) => updateField("startDate", v as string | null)} className="text-gray-700" />
       </td>
 
-      {/* End date */}
+      {/* End date — editable for ALL rows */}
       <td className="px-2 py-1 whitespace-nowrap">
-        {row.source === "hubspot" ? (
-          <EditableCell rowId={row.id} field="endDate" value={row.endDate} type="date"
-            onSaved={(v) => updateField("endDate", v as string | null)} className="text-gray-700" />
-        ) : (
-          <span className="text-gray-600 px-1">{row.endDate ?? "—"}</span>
-        )}
+        <EditableCell rowId={row.id} field="endDate" value={row.endDate} type="date"
+          onSaved={(v) => updateField("endDate", v as string | null)} className="text-gray-700" />
       </td>
 
-      {/* Effort */}
+      {/* Sold Hrs — editable */}
       <td className="px-2 py-1 text-right">
-        <EditableCell rowId={row.id} field="effort" value={row.effort} type="number"
-          onSaved={(v) => updateField("effort", v as number | null)}
+        <EditableCell rowId={row.id} field="soldHrs" value={row.soldHrs} type="number"
+          onSaved={(v) => updateField("soldHrs", v as number | null)}
           className="text-right text-gray-800" placeholder="" />
+      </td>
+
+      {/* Effort Hrs — computed, read-only */}
+      <td className="px-2 py-1 text-right">
+        <div className="flex items-center justify-end">
+          {effortDot(effortHrs, row.soldHrs)}
+          <span className="text-gray-800">
+            {effortHrs > 0 ? effortHrs : ""}
+          </span>
+        </div>
       </td>
 
       {/* SO */}
