@@ -18,13 +18,11 @@ Capacity coordination tool between /slantis team and HMC Architects — merges O
 
 ## Open Tasks
 
-- [ ] Configure Odoo credentials in Vercel (`ODOO_URL`, `ODOO_DB`, `ODOO_USERNAME`, `ODOO_PASSWORD`)
-- [ ] Configure HubSpot credentials in Vercel (`HUBSPOT_ACCESS_TOKEN`)
-- [ ] Verify HubSpot pipeline/stage filter IDs (Service Pipeline + Closed Won)
+- [ ] **Run `prisma db push`** — adds `soldHrs` + `soSeeded` columns to Turso (run `vercel login` first, then `vercel env pull .env.local && npx prisma db push`)
 - [ ] Build user management admin UI (currently manual via Turso dashboard)
-- [ ] Verify SO column Odoo field names (`sale_order_id` / `analytic_account_id`)
+- [ ] Rename OAuth app "process-job-emails" → "slantis" in GCP Console (APIs & Services → OAuth consent screen)
+- [ ] Verify SO column returns human-readable name (`sale_order_id[1]`) instead of numeric ID
 - [ ] Month visibility toggle UI (currently `hidden: true` in `months.ts` only)
-- [ ] Merge/rename `claude/hmc-architects-home-page-wutmV` branch to `main`
 
 ---
 
@@ -40,7 +38,19 @@ npm run dev            # → http://localhost:3000
 
 ## Session Log
 
-### 2026-04-16
+### 2026-04-16 (session 2)
+- Group collapse/expand: all groups start collapsed; click header to toggle (▲/▼)
+- Frozen header: two-table layout — black header card static above scrollable body div; JS syncs horizontal scroll
+- Group cards: each group is a separate rounded card with colored header, bullet, name, count
+- "H" → "Hrs" in monthly sub-header columns
+- Effort Hrs: computed from sum of monthly hours (read-only); replaces manual Effort field
+- Sold Hrs: new editable column; auto-seeded once from Odoo SO `x_studio_sold_hours` (soSeeded flag)
+- Dates editable for all rows; Odoo rows seeded once from SO project start/end dates
+- Color dot on Effort Hrs: 🟢≤5% · 🟡≤15% · 🔴>15% deviation from Sold Hrs
+- Prisma schema: `soldHrs Float?` + `soSeeded Boolean @default(false)` added to ManualData
+- **Pending:** `prisma db push` to apply schema to Turso
+
+### 2026-04-16 (session 1)
 - Registered project: memory file + registry entry created
 - Cloned repo from `nmd-slantis/hmc-capacity`
 - Documented full stack, env vars, file structure, DB schema, and open tasks
