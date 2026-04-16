@@ -17,6 +17,17 @@ interface CapacityTableProps {
   initialRows: CapacityRow[];
 }
 
+const GROUP_STYLE: Record<string, { header: string; bullet: string }> = {
+  "Ongoing":          { header: "bg-blue-700 text-white",    bullet: "bg-blue-300"    },
+  "Service Pipeline": { header: "bg-orange-600 text-white",  bullet: "bg-orange-300"  },
+  "To-Do":            { header: "bg-slate-600 text-white",   bullet: "bg-slate-400"   },
+  "Sales Pipeline":   { header: "bg-amber-600 text-white",   bullet: "bg-amber-300"   },
+  "Closed Won":       { header: "bg-emerald-700 text-white", bullet: "bg-emerald-300" },
+  "Completed":        { header: "bg-green-700 text-white",   bullet: "bg-green-300"   },
+  "Closed Lost":      { header: "bg-rose-600 text-white",    bullet: "bg-rose-300"    },
+  "No Dates":         { header: "bg-gray-500 text-white",    bullet: "bg-gray-300"    },
+};
+
 /** Identical colgroup used in both the header table and the body table */
 function TableColgroup() {
   return (
@@ -49,6 +60,10 @@ export function CapacityTable({ initialRows }: CapacityTableProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  const toggleGroup = (label: string) =>
+    setCollapsed((prev) => ({ ...prev, [label]: !prev[label] }));
 
   useEffect(() => {
     if (searchOpen) searchRef.current?.focus();
@@ -190,20 +205,45 @@ export function CapacityTable({ initialRows }: CapacityTableProps) {
           <table className="text-xs" style={TABLE_STYLE}>
             <TableColgroup />
             <tbody>
-              {groups.map(({ label, rows }, gi) => (
-                <React.Fragment key={label}>
-                  {/* Divider between groups */}
-                  {gi > 0 && (
-                    <tr>
-                      <td colSpan={totalCols} className="py-1.5 bg-[#e8e8e8]" />
-                    </tr>
-                  )}
+              {groups.map(({ label, rows }, gi) => {
+                const style = GROUP_STYLE[label] ?? { header: "bg-gray-500 text-white", bullet: "bg-gray-300" };
+                const isCollapsed = collapsed[label] ?? false;
+                return (
+                  <React.Fragment key={label}>
+                    {/* Gap between groups */}
+                    {gi > 0 && (
+                      <tr>
+                        <td colSpan={totalCols} className="py-2 bg-[#f0f0f0]" />
+                      </tr>
+                    )}
 
-                  {rows.map((row) => (
-                    <ProjectRow key={row.id} initialRow={row} />
-                  ))}
-                </React.Fragment>
-              ))}
+                    {/* Group header row — click to collapse/expand */}
+                    <tr
+                      className="cursor-pointer select-none"
+                      onClick={() => toggleGroup(label)}
+                    >
+                      <td
+                        colSpan={totalCols}
+                        className={`px-4 py-2 ${style.header}`}
+                        style={{ fontFamily: "Space Grotesk, sans-serif" }}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${style.bullet}`} />
+                          <span className="font-semibold text-[13px] tracking-wide">{label}</span>
+                          <span className="ml-1 text-[11px] font-normal opacity-70">({rows.length})</span>
+                          <span className="ml-auto text-[11px] opacity-60">
+                            {isCollapsed ? "▼" : "▲"}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {!isCollapsed && rows.map((row) => (
+                      <ProjectRow key={row.id} initialRow={row} />
+                    ))}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>
