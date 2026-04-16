@@ -31,7 +31,7 @@ export function CollapsibleHeader({ email, today, rowCount, signOut }: Collapsib
             HMC Architects
           </span>
           <span className="ml-2 text-[10px] bg-[#FF7700]/20 text-[#FF7700] px-2 py-0.5 rounded-full font-medium uppercase tracking-wider border border-[#FF7700]/30">
-            Capacity
+            Planning
           </span>
         </div>
 

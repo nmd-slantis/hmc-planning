@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { VISIBLE_MONTHS } from "@/config/months";
 import { ProjectRow } from "./ProjectRow";
-import type { CapacityRow } from "@/types/capacity";
+import type { PlanningRow } from "@/types/planning";
 
 function SearchIcon() {
   return (
@@ -13,8 +13,8 @@ function SearchIcon() {
   );
 }
 
-interface CapacityTableProps {
-  initialRows: CapacityRow[];
+interface PlanningTableProps {
+  initialRows: PlanningRow[];
 }
 
 const GROUP_STYLE: Record<string, { header: string; bullet: string }> = {
@@ -33,7 +33,8 @@ function TableColgroup() {
   return (
     <colgroup>
       <col style={{ width: "260px" }} />
-      <col style={{ width: "50px" }} />
+      <col style={{ width: "50px" }} />{/* ODOO */}
+      <col style={{ width: "50px" }} />{/* HS */}
       <col style={{ width: "95px" }} />
       <col style={{ width: "95px" }} />
       <col style={{ width: "65px" }} />{/* Sold Hrs */}
@@ -56,9 +57,9 @@ const TABLE_STYLE: React.CSSProperties = {
 };
 
 /** Minimum pixel width of a table row — sum of all colgroup widths */
-const TABLE_MIN_WIDTH = "1867px";
+const TABLE_MIN_WIDTH = "1917px";
 
-export function CapacityTable({ initialRows }: CapacityTableProps) {
+export function PlanningTable({ initialRows }: PlanningTableProps) {
   const [searchOpen, setSearchOpen]   = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -104,7 +105,7 @@ export function CapacityTable({ initialRows }: CapacityTableProps) {
     : initialRows;
 
   // Group rows preserving sort order
-  const groups: { label: string; rows: CapacityRow[] }[] = [];
+  const groups: { label: string; rows: PlanningRow[] }[] = [];
   for (const row of filtered) {
     const last = groups[groups.length - 1];
     if (last && last.label === row.group) last.rows.push(row);
@@ -129,7 +130,7 @@ export function CapacityTable({ initialRows }: CapacityTableProps) {
               {/* Row 1 — month labels */}
               <tr className="bg-[#202022] text-white">
                 <th colSpan={1} className="px-3 py-2 border-r-2 border-gray-600" />
-                <th colSpan={6} className="border-r-2 border-gray-600" />
+                <th colSpan={7} className="border-r-2 border-gray-600" />
                 {VISIBLE_MONTHS.map((m, i) => (
                   <th
                     key={m.key}
@@ -184,7 +185,8 @@ export function CapacityTable({ initialRows }: CapacityTableProps) {
                     </div>
                   )}
                 </th>
-                <th className="px-2 py-1.5 text-center">Src</th>
+                <th className="px-2 py-1.5 text-center">Odoo</th>
+                <th className="px-2 py-1.5 text-center">HS</th>
                 <th className="px-2 py-1.5 text-left">Start</th>
                 <th className="px-2 py-1.5 text-left">Finish</th>
                 <th className="px-2 py-1.5 text-right">Sold Hrs</th>

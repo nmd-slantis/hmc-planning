@@ -2,7 +2,7 @@ export type RowSource = "odoo" | "hubspot";
 
 export type RowStatus = "ongoing" | "done" | "todo" | "undated";
 
-export interface CapacityRow {
+export interface PlanningRow {
   id: string;              // "odoo-{id}" or "hubspot-{id}"
   source: RowSource;
   name: string;
@@ -16,5 +16,6 @@ export interface CapacityRow {
   hsPipeline: string | null;  // HubSpot pipeline ID (hubspot rows only)
   hsStage: string | null;     // HubSpot dealstage ID (hubspot rows only)
   hsUrl: string | null;       // Direct link to the HubSpot deal (hubspot rows only)
+  odooSoUrl: string | null;   // Direct link to the Odoo Sales Order (odoo rows only)
   group: string;              // display group label, used for section headers
 }

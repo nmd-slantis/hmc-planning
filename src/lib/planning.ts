@@ -1,7 +1,7 @@
 import { fetchOdooProjects, fetchOdooSoDetails, extractSoNumber } from "./odoo";
 import { fetchHubspotDeals, fetchHubSpotPortalId } from "./hubspot";
 import { prisma } from "./prisma";
-import type { CapacityRow, RowStatus } from "@/types/capacity";
+import type { PlanningRow, RowStatus } from "@/types/planning";
 
 const HS_SERVICE_PIPELINE = "673846910";
 const HS_CLOSED_WON_STAGES = new Set(["closedwon", "969753704"]);
@@ -51,7 +51,7 @@ function isoDate(val: string | false | null | undefined): string | null {
   return val.substring(0, 10);
 }
 
-export async function buildCapacityRows(): Promise<CapacityRow[]> {
+export async function buildPlanningRows(): Promise<PlanningRow[]> {
   const [odooProjects, hubspotDeals, allManualData, hsPortalId] = await Promise.all([
     fetchOdooProjects().catch((e) => {
       console.error("Odoo fetch failed:", e);
@@ -102,10 +102,13 @@ export async function buildCapacityRows(): Promise<CapacityRow[]> {
 
         const existing = manualMap.get(rowId);
 
-        const soldHrs =
-          typeof so.x_studio_sold_hours === "number"
-            ? so.x_studio_sold_hours
-            : existing?.soldHrs ?? null;
+        const rawHrs = so.x_studio_sold_hours;
+        const parsedHrs = rawHrs !== false && rawHrs !== null && rawHrs !== undefined
+          ? parseFloat(String(rawHrs))
+          : NaN;
+        const soldHrs = !isNaN(parsedHrs) && parsedHrs > 0
+          ? parsedHrs
+          : existing?.soldHrs ?? null;
 
         // Only set dates if not already manually set
         const startDate =
@@ -164,7 +167,7 @@ export async function buildCapacityRows(): Promise<CapacityRow[]> {
   }
   // ────────────────────────────────────────────────────────────────────────
 
-  const rows: CapacityRow[] = [];
+  const rows: PlanningRow[] = [];
 
   for (const p of odooProjects) {
     const id = `odoo-${p.id}`;
@@ -199,6 +202,9 @@ export async function buildCapacityRows(): Promise<CapacityRow[]> {
       hsPipeline: null,
       hsStage: null,
       hsUrl: null,
+      odooSoUrl: Array.isArray(p.sale_order_id)
+        ? `${process.env.ODOO_URL}/odoo/sales/${(p.sale_order_id as [number, string])[0]}`
+        : null,
       group: ODOO_GROUP[status],
     });
   }
@@ -235,6 +241,7 @@ export async function buildCapacityRows(): Promise<CapacityRow[]> {
       hsPipeline,
       hsStage,
       hsUrl: hsPortalId ? `https://app.hubspot.com/contacts/${hsPortalId}/deal/${d.id}` : null,
+      odooSoUrl: null,
       group: hsGroup(hsPipeline, hsStage),
     });
   }

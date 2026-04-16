@@ -3,10 +3,10 @@
 import React, { useState } from "react";
 import { EditableCell } from "./EditableCell";
 import { VISIBLE_MONTHS, hoursToFte } from "@/config/months";
-import type { CapacityRow } from "@/types/capacity";
+import type { PlanningRow } from "@/types/planning";
 
 interface ProjectRowProps {
-  initialRow: CapacityRow;
+  initialRow: PlanningRow;
 }
 
 // Row background + border keyed by group label
@@ -20,6 +20,16 @@ const GROUP_ROW_CLASS: Record<string, string> = {
   "Closed Lost":      "bg-rose-50 border-rose-200 opacity-70",
   "No Dates":         "bg-white border-gray-100",
 };
+
+/** Odoo "O" mark — simplified Odoo icon */
+function OdooMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" aria-hidden="true">
+      <circle cx="12" cy="12" r="5.5" fill="none" stroke="white" strokeWidth="2.5" />
+      <circle cx="12" cy="5.5" r="2" fill="white" />
+    </svg>
+  );
+}
 
 /** HubSpot sprocket mark — simplified 3-arm connected-circles logo */
 function HubSpotMark() {
@@ -51,9 +61,9 @@ function effortDot(effortHrs: number, soldHrs: number | null): React.ReactNode {
 }
 
 export function ProjectRow({ initialRow }: ProjectRowProps) {
-  const [row, setRow] = useState<CapacityRow>(initialRow);
+  const [row, setRow] = useState<PlanningRow>(initialRow);
 
-  const updateField = <K extends keyof CapacityRow>(key: K, value: CapacityRow[K]) =>
+  const updateField = <K extends keyof PlanningRow>(key: K, value: PlanningRow[K]) =>
     setRow((prev) => ({ ...prev, [key]: value }));
 
   const updateMonthHours = (monthKey: string, hours: number | null) =>
@@ -79,9 +89,24 @@ export function ProjectRow({ initialRow }: ProjectRowProps) {
         </span>
       </td>
 
-      {/* Source */}
+      {/* Odoo SO link */}
       <td className="px-2 py-2 text-center">
-        {row.source === "hubspot" ? (
+        {row.odooSoUrl ? (
+          <a
+            href={row.odooSoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#714B67] hover:opacity-80 transition-opacity"
+            title="Open Sales Order in Odoo"
+          >
+            <OdooMark />
+          </a>
+        ) : null}
+      </td>
+
+      {/* HubSpot link */}
+      <td className="px-2 py-2 text-center">
+        {row.source === "hubspot" && (
           <a
             href={row.hsUrl ?? undefined}
             target="_blank"
@@ -92,10 +117,6 @@ export function ProjectRow({ initialRow }: ProjectRowProps) {
           >
             <HubSpotMark />
           </a>
-        ) : (
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">
-            Odoo
-          </span>
         )}
       </td>
 

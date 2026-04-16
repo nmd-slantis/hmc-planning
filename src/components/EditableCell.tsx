@@ -63,7 +63,7 @@ export function EditableCell({
     }
 
     try {
-      const res = await fetch(`/api/capacity/${rowId}`, {
+      const res = await fetch(`/api/planning/${rowId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

@@ -18,7 +18,7 @@ export async function GET(
   return NextResponse.json(record ?? null);
 }
 
-// PATCH /api/capacity/[id]
+// PATCH /api/planning/[id]
 // Body variants:
 //   { effort: number | null }
 //   { startDate: string | null }  — Hubspot only

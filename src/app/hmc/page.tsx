@@ -1,7 +1,7 @@
 import { auth, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { buildCapacityRows } from "@/lib/capacity";
-import { CapacityTable } from "@/components/CapacityTable";
+import { buildPlanningRows } from "@/lib/planning";
+import { PlanningTable } from "@/components/PlanningTable";
 import { CollapsibleHeader } from "@/components/CollapsibleHeader";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ export default async function HmcPage() {
   const session = await auth();
   if (!session) redirect("/login");
 
-  const rows = await buildCapacityRows();
+  const rows = await buildPlanningRows();
 
   const today = new Date().toLocaleDateString("en-US", {
     month: "long",
@@ -33,7 +33,7 @@ export default async function HmcPage() {
       />
 
       <main className="px-6 py-6 pb-10">
-        <CapacityTable initialRows={rows} />
+        <PlanningTable initialRows={rows} />
       </main>
 
       <footer className="px-6 py-4 text-center text-[10px] text-gray-400">
