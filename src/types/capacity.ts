@@ -15,5 +15,6 @@ export interface CapacityRow {
   status: RowStatus;
   hsPipeline: string | null;  // HubSpot pipeline ID (hubspot rows only)
   hsStage: string | null;     // HubSpot dealstage ID (hubspot rows only)
+  hsUrl: string | null;       // Direct link to the HubSpot deal (hubspot rows only)
   group: string;              // display group label, used for section headers
 }

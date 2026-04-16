@@ -21,10 +21,24 @@ const GROUP_ROW_CLASS: Record<string, string> = {
   "No Dates":         "bg-white border-gray-100",
 };
 
-const SOURCE_BADGE: Record<string, { bg: string; label: string }> = {
-  odoo:    { bg: "bg-purple-100 text-purple-700", label: "Odoo" },
-  hubspot: { bg: "bg-orange-100 text-orange-700", label: "HS"   },
-};
+/** HubSpot sprocket mark — simplified 3-arm connected-circles logo */
+function HubSpotMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" aria-hidden="true">
+      {/* Center */}
+      <circle cx="12" cy="12" r="3" fill="white" />
+      {/* Top arm */}
+      <rect x="11" y="5.5" width="2" height="4.5" rx="1" fill="white" />
+      <circle cx="12" cy="4.5" r="2.5" fill="white" />
+      {/* Bottom-right arm */}
+      <line x1="14.2" y1="13.5" x2="17.5" y2="16" stroke="white" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="19" cy="17.2" r="2.5" fill="white" />
+      {/* Bottom-left arm */}
+      <line x1="9.8" y1="13.5" x2="6.5" y2="16" stroke="white" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="5" cy="17.2" r="2.5" fill="white" />
+    </svg>
+  );
+}
 
 function effortDot(effortHrs: number, soldHrs: number | null): React.ReactNode {
   if (soldHrs === null || soldHrs === 0) return null;
@@ -49,7 +63,6 @@ export function ProjectRow({ initialRow }: ProjectRowProps) {
     }));
 
   const rowClass = GROUP_ROW_CLASS[row.group] ?? "bg-white border-gray-100";
-  const badge = SOURCE_BADGE[row.source];
 
   // Compute total effort hours from monthly data
   const effortHrs = Object.values(row.monthlyData).reduce(
@@ -67,10 +80,23 @@ export function ProjectRow({ initialRow }: ProjectRowProps) {
       </td>
 
       {/* Source */}
-      <td className="px-2 py-2">
-        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${badge.bg}`}>
-          {badge.label}
-        </span>
+      <td className="px-2 py-2 text-center">
+        {row.source === "hubspot" ? (
+          <a
+            href={row.hsUrl ?? undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FF7A59] hover:opacity-80 transition-opacity"
+            title={row.hsUrl ? "Open in HubSpot" : "HubSpot deal"}
+            onClick={(e) => !row.hsUrl && e.preventDefault()}
+          >
+            <HubSpotMark />
+          </a>
+        ) : (
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">
+            Odoo
+          </span>
+        )}
       </td>
 
       {/* Start date — editable for ALL rows */}

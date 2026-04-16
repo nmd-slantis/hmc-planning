@@ -1,5 +1,5 @@
 import { fetchOdooProjects, fetchOdooSoDetails, extractSoNumber } from "./odoo";
-import { fetchHubspotDeals } from "./hubspot";
+import { fetchHubspotDeals, fetchHubSpotPortalId } from "./hubspot";
 import { prisma } from "./prisma";
 import type { CapacityRow, RowStatus } from "@/types/capacity";
 
@@ -52,7 +52,7 @@ function isoDate(val: string | false | null | undefined): string | null {
 }
 
 export async function buildCapacityRows(): Promise<CapacityRow[]> {
-  const [odooProjects, hubspotDeals, allManualData] = await Promise.all([
+  const [odooProjects, hubspotDeals, allManualData, hsPortalId] = await Promise.all([
     fetchOdooProjects().catch((e) => {
       console.error("Odoo fetch failed:", e);
       return [];
@@ -62,6 +62,7 @@ export async function buildCapacityRows(): Promise<CapacityRow[]> {
       return [];
     }),
     prisma.manualData.findMany(),
+    fetchHubSpotPortalId().catch(() => null),
   ]);
 
   const manualMap = new Map(
@@ -197,6 +198,7 @@ export async function buildCapacityRows(): Promise<CapacityRow[]> {
       status,
       hsPipeline: null,
       hsStage: null,
+      hsUrl: null,
       group: ODOO_GROUP[status],
     });
   }
@@ -232,6 +234,7 @@ export async function buildCapacityRows(): Promise<CapacityRow[]> {
       status: computeStatus(startDate, endDate),
       hsPipeline,
       hsStage,
+      hsUrl: hsPortalId ? `https://app.hubspot.com/contacts/${hsPortalId}/deal/${d.id}` : null,
       group: hsGroup(hsPipeline, hsStage),
     });
   }

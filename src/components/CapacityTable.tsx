@@ -32,13 +32,13 @@ const GROUP_STYLE: Record<string, { header: string; bullet: string }> = {
 function TableColgroup() {
   return (
     <colgroup>
-      <col style={{ width: "220px" }} />
+      <col style={{ width: "260px" }} />
       <col style={{ width: "50px" }} />
       <col style={{ width: "95px" }} />
       <col style={{ width: "95px" }} />
       <col style={{ width: "65px" }} />{/* Sold Hrs */}
       <col style={{ width: "75px" }} />{/* Effort Hrs */}
-      <col style={{ width: "50px" }} />
+      <col style={{ width: "75px" }} />
       {VISIBLE_MONTHS.map((m) => (
         <React.Fragment key={m.key}>
           <col style={{ width: "56px" }} />
@@ -56,7 +56,7 @@ const TABLE_STYLE: React.CSSProperties = {
 };
 
 /** Minimum pixel width of a table row — sum of all colgroup widths */
-const TABLE_MIN_WIDTH = "1797px";
+const TABLE_MIN_WIDTH = "1867px";
 
 export function CapacityTable({ initialRows }: CapacityTableProps) {
   const [searchOpen, setSearchOpen]   = useState(false);
@@ -129,16 +129,16 @@ export function CapacityTable({ initialRows }: CapacityTableProps) {
               {/* Row 1 — month labels */}
               <tr className="bg-[#202022] text-white">
                 <th colSpan={1} className="px-3 py-2 border-r-2 border-gray-600" />
-                <th colSpan={6} className="border-r-2 border-gray-500" />
+                <th colSpan={6} className="border-r-2 border-gray-600" />
                 {VISIBLE_MONTHS.map((m, i) => (
                   <th
                     key={m.key}
                     colSpan={2}
                     className={`px-2 py-2 text-[11px] whitespace-nowrap ${
                       i === 0
-                        ? "border-l-2 border-gray-500"
+                        ? "border-l-2 border-gray-600"
                         : m.quarterStart
-                        ? "border-l-2 border-gray-500"
+                        ? "border-l-2 border-gray-600"
                         : "border-l border-gray-700"
                     }`}
                     style={{ fontFamily: "Space Grotesk, sans-serif" }}
@@ -194,7 +194,7 @@ export function CapacityTable({ initialRows }: CapacityTableProps) {
                   <React.Fragment key={m.key}>
                     <th className={`px-1 py-1.5 text-right ${
                       i === 0
-                        ? "border-l-2 border-gray-500"
+                        ? "border-l-2 border-gray-600"
                         : m.quarterStart
                         ? "border-l-2 border-gray-600"
                         : "border-l border-gray-700"

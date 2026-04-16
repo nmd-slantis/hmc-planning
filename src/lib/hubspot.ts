@@ -93,3 +93,12 @@ export async function fetchHubspotDeals(): Promise<HubspotDeal[]> {
   // No filtering — all deals shown, color-coded by pipeline/stage in the UI.
   return allDeals;
 }
+
+export async function fetchHubSpotPortalId(): Promise<number | null> {
+  try {
+    const data = await hs<{ portalId: number }>("/integrations/v1/me");
+    return data.portalId ?? null;
+  } catch {
+    return null;
+  }
+}
