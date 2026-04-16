@@ -104,10 +104,18 @@ export function EditableCell({
     setEditing(false);
   };
 
-  const displayValue =
-    value !== null && value !== undefined && value !== ""
-      ? String(value)
-      : null;
+  // Format ISO date (YYYY-MM-DD) → MM/DD/YYYY for display
+  const formatDisplay = (v: string | number | null): string | null => {
+    if (v === null || v === undefined || v === "") return null;
+    const s = String(v);
+    if (type === "date" && /^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const [y, m, d] = s.split("-");
+      return `${m}/${d}/${y}`;
+    }
+    return s;
+  };
+
+  const displayValue = formatDisplay(value);
 
   if (editing) {
     return (

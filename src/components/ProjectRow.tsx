@@ -44,7 +44,7 @@ export function ProjectRow({ initialRow }: ProjectRowProps) {
   return (
     <tr className={`border-b ${rowClass} hover:brightness-[0.97] transition-all text-xs`}>
       {/* Name */}
-      <td className="px-3 py-2 font-medium">
+      <td className="px-3 py-2 font-medium border-r-2 border-gray-300">
         <span className="block truncate" title={row.name} style={{ fontFamily: "DM Sans, sans-serif" }}>
           {row.name}
         </span>

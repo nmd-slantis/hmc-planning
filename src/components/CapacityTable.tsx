@@ -74,7 +74,7 @@ export function CapacityTable({ initialRows }: CapacityTableProps) {
 
           {/* Sub-headers: h / FTE */}
           <tr className="bg-[#2e2e30] text-gray-300 text-[10px] uppercase tracking-wider">
-            <th className="px-3 py-1.5 text-left min-w-[200px]">Project / Deal</th>
+            <th className="px-3 py-1.5 text-left min-w-[200px] border-r-2 border-gray-600">Project / Deal</th>
             <th className="px-2 py-1.5 text-center">Src</th>
             <th className="px-2 py-1.5 text-left">Start</th>
             <th className="px-2 py-1.5 text-left">Finish</th>
