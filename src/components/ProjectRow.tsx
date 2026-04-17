@@ -76,8 +76,8 @@ export function ProjectRow({ initialRow, showMonths = true }: ProjectRowProps) {
 
   return (
     <tr className={`border-b ${rowClass} hover:brightness-[0.97] transition-all text-xs`}>
-      {/* Name */}
-      <td className="px-3 py-2 font-medium border-r-2 border-gray-300">
+      {/* Name — sticky so it stays visible during horizontal scroll */}
+      <td className="sticky left-0 z-[1] bg-inherit px-3 py-2 font-medium border-r-2 border-gray-300">
         <span className="block truncate" title={row.name} style={{ fontFamily: "DM Sans, sans-serif" }}>
           {row.name}
         </span>

@@ -163,14 +163,14 @@ export function PlanningTable({ initialRows, showMonths = true }: PlanningTableP
 
       {/* ── FROZEN HEADER ───────────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 rounded-xl overflow-hidden border border-gray-300 shadow-md">
-        <div ref={headerScrollRef} style={{ overflowX: "hidden" }}>
+        <div ref={headerScrollRef} style={{ overflowX: "scroll", scrollbarWidth: "none" } as React.CSSProperties} className="[&::-webkit-scrollbar]:hidden">
           <table className="text-xs" style={{ ...TABLE_STYLE, minWidth: TABLE_MIN_WIDTH }}>
             <TableColgroup showMonths={showMonths} />
             <thead>
               {/* Row 1 — filter toggle + month labels */}
-              <tr className="bg-[#202022] text-white">
-                <th colSpan={1} className="px-3 py-2 border-r-2 border-gray-600" />
-                <th colSpan={9} className="px-3 border-r-2 border-gray-600">
+              <tr className="bg-[#202022] text-white" style={{ height: "40px" }}>
+                <th colSpan={1} className="sticky left-0 z-[1] bg-[#202022] px-3 py-2 border-r-2 border-gray-600" />
+                <th colSpan={9} className="px-3 py-2 border-r-2 border-gray-600">
                   <button
                     onClick={() => setActiveOnly((v) => !v)}
                     className={`flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded transition-colors ${
@@ -204,8 +204,8 @@ export function PlanningTable({ initialRows, showMonths = true }: PlanningTableP
               </tr>
 
               {/* Row 2 — sub-headers */}
-              <tr className="bg-[#2e2e30] text-gray-300 text-[10px] uppercase tracking-wider">
-                <th className="px-3 py-1 border-r-2 border-gray-600">
+              <tr className="bg-[#2e2e30] text-gray-300 text-[10px] uppercase tracking-wider" style={{ height: "30px" }}>
+                <th className="sticky left-0 z-[1] bg-[#2e2e30] px-3 py-1 border-r-2 border-gray-600">
                   {searchOpen ? (
                     <div className="flex items-center gap-1">
                       <input
@@ -327,13 +327,16 @@ export function PlanningTable({ initialRows, showMonths = true }: PlanningTableP
                   <TableColgroup showMonths={showMonths} />
                   <thead>
                     <tr className={`cursor-pointer select-none ${style.header}`} onClick={() => toggleGroup(label)}>
-                      <td colSpan={10} className="px-4 py-2.5" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
+                      {/* Sticky name cell — 300px, same as first data column */}
+                      <td className="sticky left-0 z-[1] bg-inherit px-4 py-2.5" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
                         <div className="flex items-center gap-2.5">
                           <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${style.bullet}`} />
                           <span className="font-semibold text-[13px] tracking-wide">{label}</span>
                           <span className="ml-1 text-[11px] font-normal opacity-70">({rows.length})</span>
-                          <span className="ml-auto text-[11px] opacity-60">{isCollapsed ? "▼" : "▲"}</span>
                         </div>
+                      </td>
+                      <td colSpan={9} className="px-4 py-2.5 text-right text-[11px] opacity-60">
+                        {isCollapsed ? "▼" : "▲"}
                       </td>
                       {/* Admin placeholder cells */}
                       {!showMonths && (
