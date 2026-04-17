@@ -329,7 +329,7 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
       hsStage: null,
       hsUrl: null,
       odooSoUrl: Array.isArray(p.sale_order_id)
-        ? `${process.env.ODOO_URL}/odoo/sales/${(p.sale_order_id as [number, string])[0]}`
+        ? `${process.env.ODOO_URL}/web#id=${(p.sale_order_id as [number, string])[0]}&cids=1-2-3&menu_id=336&action=483&model=sale.order&view_type=form`
         : null,
       group: ODOO_GROUP[status],
     });
@@ -369,7 +369,7 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
       hsUrl: hsPortalId ? `https://app.hubspot.com/contacts/${hsPortalId}/deal/${d.id}` : null,
       odooSoUrl: (() => {
         const so = d.properties.sales_order ? hsSoMap.get(d.properties.sales_order) : undefined;
-        return so ? `${process.env.ODOO_URL}/odoo/sales/${so.id}` : null;
+        return so ? `${process.env.ODOO_URL}/web#id=${so.id}&cids=1-2-3&menu_id=336&action=483&model=sale.order&view_type=form` : null;
       })(),
       group: hsGroup(hsPipeline, hsStage),
     });
