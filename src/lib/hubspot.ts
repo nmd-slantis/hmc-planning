@@ -8,6 +8,8 @@ export interface HubspotDeal {
     closedate: string | null;
     sales_order: string | null;
     odoo_url: string | null;
+    project_start_date: string | null;
+    project_end_date: string | null;
   };
 }
 
@@ -83,7 +85,7 @@ export async function fetchHubspotDeals(): Promise<HubspotDeal[]> {
         method: "POST",
         body: JSON.stringify({
           inputs: chunk.map((id) => ({ id })),
-          properties: ["dealname", "pipeline", "dealstage", "createdate", "closedate", "sales_order", "odoo_url"],
+          properties: ["dealname", "pipeline", "dealstage", "createdate", "closedate", "sales_order", "odoo_url", "project_start_date", "project_end_date"],
         }),
         next: { revalidate: 300 },
       }

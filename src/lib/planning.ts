@@ -167,6 +167,73 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
   }
   // ────────────────────────────────────────────────────────────────────────
 
+  // ── Seed dates for unseeded HubSpot deals ────────────────────────────────
+  try {
+    // HubSpot returns date properties as Unix ms timestamps (string)
+    const parseHsDate = (v: string | null | undefined): Date | null => {
+      if (!v) return null;
+      const ts = parseInt(v);
+      return isNaN(ts) ? null : new Date(ts);
+    };
+
+    const unseededHs = hubspotDeals.filter(
+      (d) =>
+        !manualMap.get(`hubspot-${d.id}`)?.soSeeded &&
+        (d.properties.project_start_date || d.properties.project_end_date)
+    );
+
+    for (const d of unseededHs) {
+      const rowId = `hubspot-${d.id}`;
+      const existing = manualMap.get(rowId);
+
+      const startDate =
+        existing?.startDate !== undefined && existing.startDate !== null
+          ? existing.startDate
+          : parseHsDate(d.properties.project_start_date);
+
+      const endDate =
+        existing?.endDate !== undefined && existing.endDate !== null
+          ? existing.endDate
+          : parseHsDate(d.properties.project_end_date);
+
+      const upsertData = {
+        id: rowId,
+        source: "hubspot",
+        sourceId: d.id,
+        soSeeded: true,
+        soldHrs: existing?.soldHrs ?? null,
+        startDate,
+        endDate,
+        effort: existing?.effort ?? null,
+        monthlyData: existing ? JSON.stringify(existing.monthlyData) : "{}",
+      };
+
+      await prisma.manualData.upsert({
+        where: { id: rowId },
+        create: upsertData,
+        update: upsertData,
+      });
+
+      manualMap.set(rowId, {
+        ...(existing ?? {
+          id: rowId,
+          source: "hubspot",
+          sourceId: d.id,
+          effort: null,
+          updatedAt: new Date(),
+          monthlyData: {},
+        }),
+        soSeeded: true,
+        soldHrs: existing?.soldHrs ?? null,
+        startDate,
+        endDate,
+      } as typeof existing & { soSeeded: boolean; soldHrs: number | null; startDate: Date | null; endDate: Date | null; monthlyData: Record<string, number> });
+    }
+  } catch (e) {
+    console.error("HubSpot date seeding failed (non-fatal):", e);
+  }
+  // ────────────────────────────────────────────────────────────────────────
+
   const rows: PlanningRow[] = [];
 
   for (const p of odooProjects) {
