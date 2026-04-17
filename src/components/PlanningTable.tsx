@@ -32,13 +32,13 @@ const GROUP_STYLE: Record<string, { header: string; bullet: string }> = {
 function TableColgroup() {
   return (
     <colgroup>
-      <col style={{ width: "260px" }} />
+      <col style={{ width: "300px" }} />
       <col style={{ width: "36px" }} />{/* HS */}
       <col style={{ width: "36px" }} />{/* ODOO */}
       <col style={{ width: "36px" }} />{/* DocuSign */}
       <col style={{ width: "95px" }} />
       <col style={{ width: "95px" }} />
-      <col style={{ width: "75px" }} />{/* Effort Hrs */}
+      <col style={{ width: "58px" }} />{/* Effort Hrs */}
       <col style={{ width: "75px" }} />{/* SO */}
       <col style={{ width: "150px" }} />{/* Comments */}
       <col style={{ width: "80px" }} />{/* Approved */}
@@ -59,7 +59,7 @@ const TABLE_STYLE: React.CSSProperties = {
 };
 
 /** Minimum pixel width of a table row — sum of all colgroup widths */
-const TABLE_MIN_WIDTH = "1953px";
+const TABLE_MIN_WIDTH = "1976px";
 
 export function PlanningTable({ initialRows }: PlanningTableProps) {
   const [searchOpen, setSearchOpen]   = useState(false);
