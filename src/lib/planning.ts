@@ -65,8 +65,12 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
   const parseHsDate = (v: string | null | undefined): Date | null => {
     if (!v) return null;
     const ts = parseInt(v);
-    return isNaN(ts) ? null : new Date(ts);
+    if (isNaN(ts) || ts === 0) return null;
+    return new Date(ts);
   };
+
+  const isValidDate = (d: Date | null | undefined): d is Date =>
+    d != null && !isNaN(d.getTime()) && d.getTime() !== 0;
 
   let hsSoMap = new Map<string, OdooSoData>();
   try {
@@ -119,17 +123,17 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
       const soData = d.properties.sales_order ? hsSoMap.get(d.properties.sales_order) : undefined;
       const projDates = soData ? getSoProjectDates(soData) : { startDate: null, endDate: null };
 
-      const needsDateSeed = (existing?.startDate == null || existing?.endDate == null) &&
+      const needsDateSeed = (!isValidDate(existing?.startDate) || !isValidDate(existing?.endDate)) &&
         !!(projDates.startDate || projDates.endDate || d.properties.project_start_date || d.properties.project_end_date);
       const needsSoldHrsSeed = existing?.soldHrs == null && !!soData;
       if (!needsDateSeed && !needsSoldHrsSeed) continue;
 
-      // Odoo project dates primary → HS dates fallback → keep existing
+      // Odoo project dates primary → HS dates fallback → keep existing valid date
       const startDate =
-        existing?.startDate != null ? existing.startDate
+        isValidDate(existing?.startDate) ? existing.startDate
         : projDates.startDate ?? parseHsDate(d.properties.project_start_date);
       const endDate =
-        existing?.endDate != null ? existing.endDate
+        isValidDate(existing?.endDate) ? existing.endDate
         : projDates.endDate ?? parseHsDate(d.properties.project_end_date);
 
       let soldHrs = existing?.soldHrs ?? null;
@@ -165,9 +169,9 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
     const manual = manualMap.get(id);
     const soData = d.properties.sales_order ? hsSoMap.get(d.properties.sales_order) : undefined;
     const projDates = soData ? getSoProjectDates(soData) : { startDate: null, endDate: null };
-    // Manual date (user-set) → live Odoo project dates → null
-    const startDate = dateToIso(manual?.startDate) ?? dateToIso(projDates.startDate);
-    const endDate = dateToIso(manual?.endDate) ?? dateToIso(projDates.endDate);
+    // Valid manual date → live Odoo project dates → null (epoch treated as missing)
+    const startDate = isValidDate(manual?.startDate) ? dateToIso(manual.startDate) : dateToIso(projDates.startDate);
+    const endDate = isValidDate(manual?.endDate) ? dateToIso(manual.endDate) : dateToIso(projDates.endDate);
     const hsPipeline = d.properties.pipeline ?? null;
     const hsStage = d.properties.dealstage ?? null;
 
