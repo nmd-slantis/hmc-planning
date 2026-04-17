@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { EditableCell } from "./EditableCell";
 import { VISIBLE_MONTHS, hoursToFte, distributeHours } from "@/config/months";
 import type { PlanningRow } from "@/types/planning";
 
 interface ProjectRowProps {
   initialRow: PlanningRow;
+  showMonths?: boolean;
 }
 
 // Row background + border keyed by group label
@@ -60,7 +62,7 @@ function HubSpotMark() {
   );
 }
 
-export function ProjectRow({ initialRow }: ProjectRowProps) {
+export function ProjectRow({ initialRow, showMonths = true }: ProjectRowProps) {
   const [row, setRow] = useState<PlanningRow>(initialRow);
 
   const updateField = <K extends keyof PlanningRow>(key: K, value: PlanningRow[K]) =>
@@ -166,7 +168,7 @@ export function ProjectRow({ initialRow }: ProjectRowProps) {
       </td>
 
       {/* Monthly columns — projected from sold hrs / weekday distribution */}
-      {VISIBLE_MONTHS.map((month, i) => {
+      {showMonths && VISIBLE_MONTHS.map((month, i) => {
         const hours = projectedMonthly[month.key] ?? 0;
         const fte = hours > 0 ? hoursToFte(hours, month.workdayHours) : null;
 
@@ -196,6 +198,11 @@ function DocuSignCell({ rowId, url, onSaved }: { rowId: string; url: string | nu
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(url ?? "");
   const [saving, setSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 0); }, [open]);
 
   const openModal = () => { setDraft(url ?? ""); setOpen(true); };
 
@@ -211,51 +218,60 @@ function DocuSignCell({ rowId, url, onSaved }: { rowId: string; url: string | nu
     } finally { setSaving(false); }
   };
 
+  const modal = open && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onMouseDown={() => setOpen(false)}>
+      <div className="bg-white rounded-xl shadow-2xl p-5 w-96 flex flex-col gap-3"
+        onMouseDown={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#FFB500]">
+            <DocuSignMark />
+          </span>
+          <span className="font-semibold text-sm text-gray-800">DocuSign URL</span>
+        </div>
+        <input
+          ref={inputRef}
+          type="url"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }}
+          placeholder="https://app.docusign.com/…"
+          className="text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-[#FFB500] focus:ring-1 focus:ring-[#FFB500] w-full"
+        />
+        <div className="flex items-center gap-2 justify-end">
+          {url && (
+            <button onClick={() => setDraft("")} className="text-xs text-rose-500 hover:text-rose-700 mr-auto">
+              Clear
+            </button>
+          )}
+          {url && (
+            <a href={url} target="_blank" rel="noopener noreferrer"
+              className="text-xs text-[#FFB500] hover:underline px-3 py-1.5 rounded-lg border border-[#FFB500]/40">
+              Open ↗
+            </a>
+          )}
+          <button onClick={() => setOpen(false)} className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200">
+            Cancel
+          </button>
+          <button onClick={save} disabled={saving}
+            className="text-xs font-medium bg-[#FFB500] text-white px-3 py-1.5 rounded-lg hover:opacity-90 disabled:opacity-50">
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <button
         onClick={openModal}
         className={`inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFB500] transition-opacity ${url ? "hover:opacity-80" : "opacity-30 hover:opacity-50"}`}
-        title={url ? "Open DocuSign" : "Add DocuSign link"}
+        title={url ? "Edit DocuSign link" : "Add DocuSign link"}
       >
         <DocuSignMark />
       </button>
-
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setOpen(false)}>
-          <div className="bg-white rounded-xl shadow-2xl p-5 w-96 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#FFB500]">
-                <DocuSignMark />
-              </span>
-              <span className="font-semibold text-sm text-gray-800">DocuSign URL</span>
-            </div>
-            <input
-              autoFocus
-              type="url"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }}
-              placeholder="https://app.docusign.com/…"
-              className="text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-[#FFB500] focus:ring-1 focus:ring-[#FFB500] w-full"
-            />
-            <div className="flex items-center gap-2 justify-end">
-              {url && (
-                <button onClick={() => { setDraft(""); }} className="text-xs text-rose-500 hover:text-rose-700 mr-auto">
-                  Clear
-                </button>
-              )}
-              <button onClick={() => setOpen(false)} className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200">
-                Cancel
-              </button>
-              <button onClick={save} disabled={saving}
-                className="text-xs font-medium bg-[#FFB500] text-white px-3 py-1.5 rounded-lg hover:opacity-90 disabled:opacity-50">
-                {saving ? "Saving…" : "Save"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {mounted && createPortal(modal, document.body)}
     </>
   );
 }

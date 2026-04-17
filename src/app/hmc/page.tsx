@@ -1,7 +1,7 @@
 import { auth, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { buildPlanningRows } from "@/lib/planning";
-import { PlanningTable } from "@/components/PlanningTable";
+import { TabView } from "@/components/TabView";
 import { CollapsibleHeader } from "@/components/CollapsibleHeader";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +33,7 @@ export default async function HmcPage() {
       />
 
       <main className="px-6 py-6 pb-10">
-        <PlanningTable initialRows={rows} />
+        <TabView initialRows={rows} />
       </main>
 
       <footer className="px-6 py-4 text-center text-[10px] text-gray-400">
