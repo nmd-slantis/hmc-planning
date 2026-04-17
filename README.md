@@ -1,6 +1,6 @@
-# HMC Capacity — /slantis
+# HMC Planning — /slantis
 
-Capacity coordination tool between /slantis team and HMC Architects — merges Odoo projects + HubSpot deals into an editable monthly capacity table.
+Planning coordination tool between /slantis team and HMC Architects — merges Odoo projects + HubSpot deals into an editable monthly planning table.
 
 ---
 

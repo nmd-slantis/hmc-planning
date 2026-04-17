@@ -8,7 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Manual capacity data ────────────────────────────────────────────────────
+// ─── Manual planning data ────────────────────────────────────────────────────
 
 model ManualData {
   id          String    @id        // "odoo-{id}" or "hubspot-{id}"
