@@ -241,7 +241,7 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
       hsPipeline,
       hsStage,
       hsUrl: hsPortalId ? `https://app.hubspot.com/contacts/${hsPortalId}/deal/${d.id}` : null,
-      odooSoUrl: null,
+      odooSoUrl: d.properties.odoo_url ?? null,
       group: hsGroup(hsPipeline, hsStage),
     });
   }
