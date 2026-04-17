@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { EditableCell } from "./EditableCell";
-import { VISIBLE_MONTHS, hoursToFte } from "@/config/months";
+import { VISIBLE_MONTHS, hoursToFte, distributeHours } from "@/config/months";
 import type { PlanningRow } from "@/types/planning";
 
 interface ProjectRowProps {
@@ -57,6 +57,10 @@ export function ProjectRow({ initialRow }: ProjectRowProps) {
     setRow((prev) => ({ ...prev, [key]: value }));
 
   const rowClass = GROUP_ROW_CLASS[row.group] ?? "bg-white border-gray-100";
+
+  const projectedMonthly = (row.soldHrs && row.startDate && row.endDate)
+    ? distributeHours(row.soldHrs, row.startDate, row.endDate, VISIBLE_MONTHS)
+    : {};
 
   return (
     <tr className={`border-b ${rowClass} hover:brightness-[0.97] transition-all text-xs`}>
@@ -135,9 +139,9 @@ export function ProjectRow({ initialRow }: ProjectRowProps) {
         />
       </td>
 
-      {/* Monthly columns — read-only */}
+      {/* Monthly columns — projected from sold hrs / weekday distribution */}
       {VISIBLE_MONTHS.map((month, i) => {
-        const hours = row.monthlyData[month.key] ?? 0;
+        const hours = projectedMonthly[month.key] ?? 0;
         const fte = hours > 0 ? hoursToFte(hours, month.workdayHours) : null;
 
         return (

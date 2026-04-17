@@ -34,3 +34,65 @@ export const VISIBLE_MONTHS = MONTHS.filter((m) => !m.hidden);
 export function hoursToFte(hours: number, monthHours: number): number {
   return Math.round((hours / monthHours) * 10) / 10;
 }
+
+const MONTH_ABBREV: Record<string, number> = {
+  jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+  jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+};
+
+function parseIsoDate(s: string): Date {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function countWeekdays(start: Date, end: Date): number {
+  let count = 0;
+  const d = new Date(start);
+  while (d <= end) {
+    const day = d.getDay();
+    if (day !== 0 && day !== 6) count++;
+    d.setDate(d.getDate() + 1);
+  }
+  return count;
+}
+
+/** Distribute soldHrs across months proportionally by weekday count within [startDate, endDate]. */
+export function distributeHours(
+  soldHrs: number,
+  startDate: string,
+  endDate: string,
+  months: MonthConfig[],
+): Record<string, number> {
+  const projectStart = parseIsoDate(startDate);
+  const projectEnd   = parseIsoDate(endDate);
+
+  const weekdaysPerMonth: Record<string, number> = {};
+  let totalWeekdays = 0;
+
+  for (const month of months) {
+    const [abbrev, yy] = month.key.split("-");
+    const m = MONTH_ABBREV[abbrev];
+    if (!m || !yy) continue;
+    const year = 2000 + parseInt(yy);
+    const monthStart = new Date(year, m - 1, 1);
+    const monthEnd   = new Date(year, m, 0);
+
+    const from = projectStart > monthStart ? projectStart : monthStart;
+    const to   = projectEnd   < monthEnd   ? projectEnd   : monthEnd;
+
+    const wd = from <= to ? countWeekdays(from, to) : 0;
+    weekdaysPerMonth[month.key] = wd;
+    totalWeekdays += wd;
+  }
+
+  if (totalWeekdays === 0) return {};
+
+  const result: Record<string, number> = {};
+  for (const month of months) {
+    const wd = weekdaysPerMonth[month.key] ?? 0;
+    if (wd > 0) {
+      result[month.key] = Math.round((soldHrs * wd / totalWeekdays) * 10) / 10;
+    }
+  }
+  return result;
+}
