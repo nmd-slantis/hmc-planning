@@ -255,7 +255,7 @@ export function PlanningTable({ initialRows }: PlanningTableProps) {
                     <circle cx="12" cy="5.5" r="2" fill="white" />
                   </svg>
                 </th>
-                {(["startDate","endDate","soldHrs","so"] as const).flatMap((key, i) => {
+                {(["startDate","endDate","soldHrs","so"] as const).flatMap((key) => {
                   const labels: Record<string, string> = { startDate: "Start", endDate: "End", soldHrs: "Effort Hrs", so: "SO" };
                   const aligns: Record<string, string> = { startDate: "text-left", endDate: "text-left", soldHrs: "text-right", so: "text-center" };
                   const active = sortKey === key;
