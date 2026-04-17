@@ -322,7 +322,7 @@ export function PlanningTable({ initialRows, showMonths = true }: PlanningTableP
             }
 
             return (
-              <div key={label} className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+              <div key={label} className="rounded-xl border border-gray-200 shadow-sm" style={{ overflow: "clip" }}>
                 <table className="text-xs" style={TABLE_STYLE}>
                   <TableColgroup showMonths={showMonths} />
                   <thead>
