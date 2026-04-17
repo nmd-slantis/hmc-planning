@@ -95,6 +95,12 @@ export async function PATCH(
     data.comments = existing.comments;
   }
 
+  if (body.docusignUrl !== undefined) {
+    data.docusignUrl = body.docusignUrl || null;
+  } else if (existing?.docusignUrl !== undefined) {
+    data.docusignUrl = existing.docusignUrl;
+  }
+
   if (body.approved !== undefined) {
     data.approved = Boolean(body.approved);
   } else {

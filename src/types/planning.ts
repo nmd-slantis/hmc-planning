@@ -19,5 +19,6 @@ export interface PlanningRow {
   odooSoUrl: string | null;   // Direct link to the Odoo Sales Order (odoo rows only)
   comments: string | null;
   approved: boolean;
+  docusignUrl: string | null;
   group: string;              // display group label, used for section headers
 }

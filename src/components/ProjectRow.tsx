@@ -103,30 +103,29 @@ export function ProjectRow({ initialRow }: ProjectRowProps) {
         )}
       </td>
 
-      {/* Odoo SO link — dimmed at 30% when no SO */}
+      {/* Odoo SO link — purple+linked / gray+full when SO but no project / dimmed when no SO */}
       <td className="px-2 py-2 text-center">
         <a
           href={row.odooSoUrl ?? undefined}
           target="_blank"
           rel="noopener noreferrer"
-          className={`inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#714B67] transition-opacity ${row.odooSoUrl ? "hover:opacity-80" : "opacity-30 cursor-default"}`}
-          title={row.odooSoUrl ? "Open Sales Order in Odoo" : "No Odoo Sales Order"}
+          className={`inline-flex items-center justify-center w-6 h-6 rounded-full transition-opacity ${
+            row.odooSoUrl
+              ? "bg-[#714B67] hover:opacity-80"
+              : row.so
+              ? "bg-gray-400 cursor-default"
+              : "bg-[#714B67] opacity-30 cursor-default"
+          }`}
+          title={row.odooSoUrl ? "Open Sales Order in Odoo" : row.so ? "SO has no linked project" : "No Odoo Sales Order"}
           onClick={(e) => !row.odooSoUrl && e.preventDefault()}
         >
           <OdooMark />
         </a>
       </td>
 
-      {/* DocuSign link — placeholder, no URL yet */}
+      {/* DocuSign link — opens modal to set URL */}
       <td className="px-2 py-2 text-center">
-        <a
-          href={undefined}
-          className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFB500] opacity-30 cursor-default"
-          title="DocuSign (coming soon)"
-          onClick={(e) => e.preventDefault()}
-        >
-          <DocuSignMark />
-        </a>
+        <DocuSignCell rowId={row.id} url={row.docusignUrl} onSaved={(v) => updateField("docusignUrl", v)} />
       </td>
 
       {/* Start date — read-only */}
@@ -190,6 +189,74 @@ export function ProjectRow({ initialRow }: ProjectRowProps) {
       })}
 
     </tr>
+  );
+}
+
+function DocuSignCell({ rowId, url, onSaved }: { rowId: string; url: string | null; onSaved: (v: string | null) => void }) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(url ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const openModal = () => { setDraft(url ?? ""); setOpen(true); };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/planning/${rowId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ docusignUrl: draft.trim() || null }),
+      });
+      if (res.ok) { onSaved(draft.trim() || null); setOpen(false); }
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <>
+      <button
+        onClick={openModal}
+        className={`inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFB500] transition-opacity ${url ? "hover:opacity-80" : "opacity-30 hover:opacity-50"}`}
+        title={url ? "Open DocuSign" : "Add DocuSign link"}
+      >
+        <DocuSignMark />
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setOpen(false)}>
+          <div className="bg-white rounded-xl shadow-2xl p-5 w-96 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#FFB500]">
+                <DocuSignMark />
+              </span>
+              <span className="font-semibold text-sm text-gray-800">DocuSign URL</span>
+            </div>
+            <input
+              autoFocus
+              type="url"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }}
+              placeholder="https://app.docusign.com/…"
+              className="text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-[#FFB500] focus:ring-1 focus:ring-[#FFB500] w-full"
+            />
+            <div className="flex items-center gap-2 justify-end">
+              {url && (
+                <button onClick={() => { setDraft(""); }} className="text-xs text-rose-500 hover:text-rose-700 mr-auto">
+                  Clear
+                </button>
+              )}
+              <button onClick={() => setOpen(false)} className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200">
+                Cancel
+              </button>
+              <button onClick={save} disabled={saving}
+                className="text-xs font-medium bg-[#FFB500] text-white px-3 py-1.5 rounded-lg hover:opacity-90 disabled:opacity-50">
+                {saving ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

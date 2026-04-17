@@ -22,6 +22,7 @@ model ManualData {
   soSeeded    Boolean   @default(false)
   comments    String?
   approved    Boolean   @default(false)
+  docusignUrl String?
   updatedAt   DateTime  @updatedAt
 }
 

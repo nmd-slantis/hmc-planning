@@ -205,6 +205,7 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
         ? `${process.env.ODOO_URL}/web#id=${soData.id}&cids=1-2-3&menu_id=336&action=483&model=sale.order&view_type=form`
         : null,
       comments: manual?.comments ?? null,
+      docusignUrl: manual?.docusignUrl ?? null,
       approved: manual?.approved ?? false,
       group: hsGroup(hsPipeline, hsStage),
     });
