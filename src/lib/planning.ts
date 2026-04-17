@@ -123,13 +123,15 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
       const soData = d.properties.sales_order ? hsSoMap.get(d.properties.sales_order) : undefined;
       const projDates = soData ? getSoProjectDates(soData) : { startDate: null, endDate: null };
 
-      // Canonical dates: SO+projects → project dates; SO only → SO date_order / null; no SO → HS createdate / null
+      // Canonical dates: SO+projects → project dates; SO only → SO date_order / null; no SO → HS project dates / null
       const canonicalStart: Date | null = soData
         ? (projDates.startDate ?? (soData.date_order
             ? new Date(String(soData.date_order).substring(0, 10))
             : null))
-        : parseHsDate(d.properties.createdate);
-      const canonicalEnd: Date | null = soData ? (projDates.endDate ?? null) : null;
+        : parseHsDate(d.properties.project_start_date);
+      const canonicalEnd: Date | null = soData
+        ? (projDates.endDate ?? null)
+        : parseHsDate(d.properties.project_end_date);
 
       const storedStartStr   = isValidDate(existing?.startDate) ? dateToIso(existing.startDate) : null;
       const storedEndStr     = isValidDate(existing?.endDate)   ? dateToIso(existing.endDate)   : null;
@@ -177,13 +179,15 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
     const manual = manualMap.get(id);
     const soData = d.properties.sales_order ? hsSoMap.get(d.properties.sales_order) : undefined;
     const projDates = soData ? getSoProjectDates(soData) : { startDate: null, endDate: null };
-    // Dates: fully live — SO+projects → project dates; SO only → SO date_order / null; no SO → HS createdate / null
+    // Dates: fully live — SO+projects → project dates; SO only → SO date_order / null; no SO → HS project dates / null
     const startDate: string | null = soData
       ? (projDates.startDate
           ? dateToIso(projDates.startDate)
           : (soData.date_order ? String(soData.date_order).substring(0, 10) : null))
-      : dateToIso(parseHsDate(d.properties.createdate));
-    const endDate: string | null = soData ? dateToIso(projDates.endDate) : null;
+      : dateToIso(parseHsDate(d.properties.project_start_date));
+    const endDate: string | null = soData
+      ? dateToIso(projDates.endDate)
+      : dateToIso(parseHsDate(d.properties.project_end_date));
     const hsPipeline = d.properties.pipeline ?? null;
     const hsStage = d.properties.dealstage ?? null;
 
