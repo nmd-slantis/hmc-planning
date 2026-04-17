@@ -119,10 +119,10 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
       const soData = d.properties.sales_order ? hsSoMap.get(d.properties.sales_order) : undefined;
       const projDates = soData ? getSoProjectDates(soData) : { startDate: null, endDate: null };
 
-      const needsFullSeed = !existing?.soSeeded &&
-        (projDates.startDate || projDates.endDate || d.properties.project_start_date || d.properties.project_end_date || soData);
+      const needsDateSeed = (existing?.startDate == null || existing?.endDate == null) &&
+        !!(projDates.startDate || projDates.endDate || d.properties.project_start_date || d.properties.project_end_date);
       const needsSoldHrsSeed = existing?.soldHrs == null && !!soData;
-      if (!needsFullSeed && !needsSoldHrsSeed) continue;
+      if (!needsDateSeed && !needsSoldHrsSeed) continue;
 
       // Odoo project dates primary → HS dates fallback → keep existing
       const startDate =
@@ -163,11 +163,13 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
   for (const d of hubspotDeals) {
     const id = `hubspot-${d.id}`;
     const manual = manualMap.get(id);
-    const startDate = dateToIso(manual?.startDate);
-    const endDate = dateToIso(manual?.endDate);
+    const soData = d.properties.sales_order ? hsSoMap.get(d.properties.sales_order) : undefined;
+    const projDates = soData ? getSoProjectDates(soData) : { startDate: null, endDate: null };
+    // Manual date (user-set) → live Odoo project dates → null
+    const startDate = dateToIso(manual?.startDate) ?? dateToIso(projDates.startDate);
+    const endDate = dateToIso(manual?.endDate) ?? dateToIso(projDates.endDate);
     const hsPipeline = d.properties.pipeline ?? null;
     const hsStage = d.properties.dealstage ?? null;
-    const soData = d.properties.sales_order ? hsSoMap.get(d.properties.sales_order) : undefined;
 
     rows.push({
       id,
