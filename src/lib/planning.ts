@@ -196,7 +196,7 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
       for (const pid of so.project_ids ?? []) projectIds.add(pid);
     }
     if (projectIds.size > 0) {
-      projectDatesMap = await fetchOdooProjectDates([...projectIds]);
+      projectDatesMap = await fetchOdooProjectDates(Array.from(projectIds));
     }
   } catch (e) {
     console.error("Odoo project dates fetch failed (non-fatal):", e);
