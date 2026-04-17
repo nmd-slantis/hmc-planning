@@ -46,6 +46,7 @@ function TableColgroup() {
           <col style={{ width: "40px" }} />
         </React.Fragment>
       ))}
+      <col style={{ width: "160px" }} />{/* Comments */}
     </colgroup>
   );
 }
@@ -221,6 +222,7 @@ export function PlanningTable({ initialRows }: PlanningTableProps) {
                     <th className="px-1 py-1.5 text-right bg-gray-800/40">FTE</th>
                   </React.Fragment>
                 ))}
+                <th className="px-2 py-1.5 text-left">Comments</th>
               </tr>
             </thead>
           </table>

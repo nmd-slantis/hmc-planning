@@ -179,6 +179,14 @@ export function ProjectRow({ initialRow }: ProjectRowProps) {
           </React.Fragment>
         );
       })}
+
+      {/* Comments */}
+      <td className="px-2 py-1">
+        <EditableCell rowId={row.id} field="comments"
+          value={row.comments} type="text"
+          onSaved={(v) => updateField("comments", (v as string | null))}
+          className="text-gray-700 text-xs" placeholder="…" />
+      </td>
     </tr>
   );
 }

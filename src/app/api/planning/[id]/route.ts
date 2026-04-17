@@ -89,6 +89,12 @@ export async function PATCH(
     data.endDate = existing.endDate;
   }
 
+  if (body.comments !== undefined) {
+    data.comments = body.comments || null;
+  } else if (existing?.comments !== undefined) {
+    data.comments = existing.comments;
+  }
+
   const record = await prisma.manualData.upsert({
     where: { id },
     create: data,

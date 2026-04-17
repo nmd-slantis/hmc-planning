@@ -20,6 +20,7 @@ model ManualData {
   monthlyData String    @default("{}") // JSON: { "aug-25": 80, ... } hours only
   soldHrs     Float?
   soSeeded    Boolean   @default(false)
+  comments    String?
   updatedAt   DateTime  @updatedAt
 }
 
