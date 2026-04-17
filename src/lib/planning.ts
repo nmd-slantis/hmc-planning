@@ -1,4 +1,4 @@
-import { fetchOdooProjects, fetchOdooSoDetails, extractSoNumber } from "./odoo";
+import { fetchOdooProjects, fetchOdooSoDetails, fetchOdooSosByNames, extractSoNumber, type OdooSoData } from "./odoo";
 import { fetchHubspotDeals, fetchHubSpotPortalId } from "./hubspot";
 import { prisma } from "./prisma";
 import type { PlanningRow, RowStatus } from "@/types/planning";
@@ -167,24 +167,38 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
   }
   // ────────────────────────────────────────────────────────────────────────
 
-  // ── Seed dates for unseeded HubSpot deals ────────────────────────────────
+  // ── Seed HubSpot deals: dates (from HS) + soldHrs + odooSoUrl (from Odoo SO) ──
+  // HubSpot returns date properties as Unix ms timestamps (string)
+  const parseHsDate = (v: string | null | undefined): Date | null => {
+    if (!v) return null;
+    const ts = parseInt(v);
+    return isNaN(ts) ? null : new Date(ts);
+  };
+
+  // Fetch Odoo SO data for all HS deals that have a SO name
+  let hsSoMap = new Map<string, OdooSoData>();
   try {
-    // HubSpot returns date properties as Unix ms timestamps (string)
-    const parseHsDate = (v: string | null | undefined): Date | null => {
-      if (!v) return null;
-      const ts = parseInt(v);
-      return isNaN(ts) ? null : new Date(ts);
-    };
+    const soNames = hubspotDeals
+      .map((d) => d.properties.sales_order)
+      .filter((s): s is string => !!s && s.trim() !== "");
+    if (soNames.length > 0) {
+      hsSoMap = await fetchOdooSosByNames(soNames);
+    }
+  } catch (e) {
+    console.error("HubSpot SO Odoo lookup failed (non-fatal):", e);
+  }
 
-    const unseededHs = hubspotDeals.filter(
-      (d) =>
-        !manualMap.get(`hubspot-${d.id}`)?.soSeeded &&
-        (d.properties.project_start_date || d.properties.project_end_date)
-    );
-
-    for (const d of unseededHs) {
+  try {
+    for (const d of hubspotDeals) {
       const rowId = `hubspot-${d.id}`;
       const existing = manualMap.get(rowId);
+      const soData = d.properties.sales_order ? hsSoMap.get(d.properties.sales_order) : undefined;
+
+      const needsFullSeed = !existing?.soSeeded &&
+        (d.properties.project_start_date || d.properties.project_end_date || soData);
+      const needsSoldHrsSeed = (existing?.soldHrs == null) && !!soData;
+
+      if (!needsFullSeed && !needsSoldHrsSeed) continue;
 
       const startDate =
         existing?.startDate !== undefined && existing.startDate !== null
@@ -196,12 +210,20 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
           ? existing.endDate
           : parseHsDate(d.properties.project_end_date);
 
+      let soldHrs = existing?.soldHrs ?? null;
+      if (needsSoldHrsSeed && soData) {
+        const rawHrs = soData.x_studio_sold_hours;
+        const parsed = rawHrs !== false && rawHrs != null
+          ? parseFloat(String(rawHrs)) : NaN;
+        if (!isNaN(parsed) && parsed > 0) soldHrs = parsed;
+      }
+
       const upsertData = {
         id: rowId,
         source: "hubspot",
         sourceId: d.id,
         soSeeded: true,
-        soldHrs: existing?.soldHrs ?? null,
+        soldHrs,
         startDate,
         endDate,
         effort: existing?.effort ?? null,
@@ -224,13 +246,13 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
           monthlyData: {},
         }),
         soSeeded: true,
-        soldHrs: existing?.soldHrs ?? null,
+        soldHrs,
         startDate,
         endDate,
       } as typeof existing & { soSeeded: boolean; soldHrs: number | null; startDate: Date | null; endDate: Date | null; monthlyData: Record<string, number> });
     }
   } catch (e) {
-    console.error("HubSpot date seeding failed (non-fatal):", e);
+    console.error("HubSpot seeding failed (non-fatal):", e);
   }
   // ────────────────────────────────────────────────────────────────────────
 
@@ -308,7 +330,10 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
       hsPipeline,
       hsStage,
       hsUrl: hsPortalId ? `https://app.hubspot.com/contacts/${hsPortalId}/deal/${d.id}` : null,
-      odooSoUrl: d.properties.odoo_url ?? null,
+      odooSoUrl: (() => {
+        const so = d.properties.sales_order ? hsSoMap.get(d.properties.sales_order) : undefined;
+        return so ? `${process.env.ODOO_URL}/odoo/sales/${so.id}` : null;
+      })(),
       group: hsGroup(hsPipeline, hsStage),
     });
   }

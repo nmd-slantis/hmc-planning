@@ -91,9 +91,41 @@ export function extractSoNumber(project: OdooProject): string | null {
 
 export interface OdooSoData {
   id: number;
+  name?: string;
   x_studio_sold_hours: number | false | null;
   x_studio_project_start_date: string | false | null;
   x_studio_project_end_date: string | false | null;
+}
+
+/** Search sale.orders by SO name (e.g. "S00042") and return a map keyed by name */
+export async function fetchOdooSosByNames(names: string[]): Promise<Map<string, OdooSoData>> {
+  if (!names.length) return new Map();
+  const uid = await authenticate();
+  const res = await fetch(`${process.env.ODOO_URL}/web/dataset/call_kw`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0", method: "call", id: 4,
+      params: {
+        model: "sale.order",
+        method: "search_read",
+        args: [[["name", "in", names]]],
+        kwargs: {
+          fields: ["id", "name", "x_studio_sold_hours", "x_studio_project_start_date", "x_studio_project_end_date"],
+          uid,
+          context: { lang: "en_US", tz: "UTC" },
+        },
+      },
+    }),
+    next: { revalidate: 300 },
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(`Odoo SO by name RPC error: ${JSON.stringify(json.error)}`);
+  const map = new Map<string, OdooSoData>();
+  for (const so of (json.result ?? []) as (OdooSoData & { name: string })[]) {
+    map.set(so.name, so);
+  }
+  return map;
 }
 
 export async function fetchOdooSoDetails(soIds: number[]): Promise<Map<number, OdooSoData>> {
