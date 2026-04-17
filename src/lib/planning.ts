@@ -192,7 +192,7 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
   let projectDatesMap = new Map<number, OdooProjectDates>();
   try {
     const projectIds = new Set<number>();
-    for (const so of hsSoMap.values()) {
+    for (const so of Array.from(hsSoMap.values())) {
       for (const pid of so.project_ids ?? []) projectIds.add(pid);
     }
     if (projectIds.size > 0) {
