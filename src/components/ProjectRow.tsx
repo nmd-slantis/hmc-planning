@@ -220,9 +220,8 @@ function DocuSignCell({ rowId, url, onSaved }: { rowId: string; url: string | nu
 
   const modal = open && (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onMouseDown={() => setOpen(false)}>
-      <div className="bg-white rounded-xl shadow-2xl p-5 w-96 flex flex-col gap-3"
-        onMouseDown={(e) => e.stopPropagation()}>
+      onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
+      <div className="bg-white rounded-xl shadow-2xl p-5 w-96 flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#FFB500]">
             <DocuSignMark />
