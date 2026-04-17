@@ -64,6 +64,7 @@ export function PlanningTable({ initialRows }: PlanningTableProps) {
   const [searchOpen, setSearchOpen]   = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
+  const [activeOnly, setActiveOnly] = useState(true);
 
   // All groups collapsed by default (true = collapsed)
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -98,12 +99,24 @@ export function PlanningTable({ initialRows }: PlanningTableProps) {
     );
   }
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Active filter: hide rows at "Project Closure" stage whose end date has already passed
+  const afterActiveFilter = activeOnly
+    ? initialRows.filter((r) => {
+        if (r.hsStage !== "988280923") return true;
+        const end = r.endDate ? new Date(r.endDate) : null;
+        return end !== null && end >= today;
+      })
+    : initialRows;
+
   // Filter by search query
   const filtered = searchQuery.trim()
-    ? initialRows.filter((r) =>
+    ? afterActiveFilter.filter((r) =>
         r.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
       )
-    : initialRows;
+    : afterActiveFilter;
 
   // Group rows preserving sort order
   const groups: { label: string; rows: PlanningRow[] }[] = [];
@@ -128,10 +141,22 @@ export function PlanningTable({ initialRows }: PlanningTableProps) {
           <table className="text-xs" style={{ ...TABLE_STYLE, minWidth: TABLE_MIN_WIDTH }}>
             <TableColgroup />
             <thead>
-              {/* Row 1 — month labels */}
+              {/* Row 1 — filter toggle + month labels */}
               <tr className="bg-[#202022] text-white">
                 <th colSpan={1} className="px-3 py-2 border-r-2 border-gray-600" />
-                <th colSpan={8} className="border-r-2 border-gray-600" />
+                <th colSpan={8} className="px-3 border-r-2 border-gray-600">
+                  <button
+                    onClick={() => setActiveOnly((v) => !v)}
+                    className={`flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded transition-colors ${
+                      activeOnly
+                        ? "bg-[#FF7700] text-white"
+                        : "bg-gray-700 text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeOnly ? "bg-white" : "bg-gray-500"}`} />
+                    Active only
+                  </button>
+                </th>
                 {VISIBLE_MONTHS.map((m, i) => (
                   <th
                     key={m.key}
