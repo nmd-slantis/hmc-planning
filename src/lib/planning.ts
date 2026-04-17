@@ -210,6 +210,16 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
     });
   }
 
-  rows.sort((a, b) => (GROUP_ORDER[a.group] ?? 99) - (GROUP_ORDER[b.group] ?? 99));
+  rows.sort((a, b) => {
+    const groupDiff = (GROUP_ORDER[a.group] ?? 99) - (GROUP_ORDER[b.group] ?? 99);
+    if (groupDiff !== 0) return groupDiff;
+    // Within group: sort by end date, then start date (nulls last)
+    const endA = a.endDate ?? "9999-99-99";
+    const endB = b.endDate ?? "9999-99-99";
+    if (endA !== endB) return endA < endB ? -1 : 1;
+    const startA = a.startDate ?? "9999-99-99";
+    const startB = b.startDate ?? "9999-99-99";
+    return startA < startB ? -1 : startA > startB ? 1 : 0;
+  });
   return rows;
 }
