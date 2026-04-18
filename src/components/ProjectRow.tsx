@@ -76,101 +76,71 @@ export function ProjectRow({ initialRow, showMonths = true }: ProjectRowProps) {
 
   return (
     <tr className={`border-b ${rowClass} hover:brightness-[0.97] transition-all text-xs`}>
-      {/* Name — sticky so it stays visible during horizontal scroll */}
+      {/* Name — sticky */}
       <td className="sticky left-0 z-[1] bg-inherit px-3 py-2 font-medium border-r-2 border-gray-300">
         <span className="block truncate" title={row.name} style={{ fontFamily: "DM Sans, sans-serif" }}>
           {row.name}
         </span>
       </td>
 
-      {/* HubSpot link */}
-      <td className="px-2 py-2 text-center">
-        {row.source === "hubspot" && (
-          <a
-            href={row.hsUrl ?? undefined}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FF7A59] hover:opacity-80 transition-opacity"
-            title={row.hsUrl ? "Open Deal in HubSpot" : "HubSpot deal"}
-            onClick={(e) => !row.hsUrl && e.preventDefault()}
-          >
-            <HubSpotMark />
-          </a>
-        )}
-      </td>
+      {/* Admin-only: HubSpot, Odoo, DocuSign */}
+      {!showMonths && (
+        <>
+          <td className="px-2 py-2 text-center">
+            {row.source === "hubspot" && (
+              <a
+                href={row.hsUrl ?? undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FF7A59] hover:opacity-80 transition-opacity"
+                title={row.hsUrl ? "Open Deal in HubSpot" : "HubSpot deal"}
+                onClick={(e) => !row.hsUrl && e.preventDefault()}
+              >
+                <HubSpotMark />
+              </a>
+            )}
+          </td>
+          <td className="px-2 py-2 text-center">
+            <a
+              href={row.odooSoUrl ?? undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex items-center justify-center w-6 h-6 rounded-full transition-opacity ${
+                row.odooSoUrl
+                  ? "bg-[#714B67] hover:opacity-80"
+                  : row.so
+                  ? "bg-gray-400 cursor-default"
+                  : "bg-[#714B67] opacity-30 cursor-default"
+              }`}
+              title={row.odooSoUrl ? "Open Sales Order in Odoo" : row.so ? "SO has no linked project" : "No Odoo Sales Order"}
+              onClick={(e) => !row.odooSoUrl && e.preventDefault()}
+            >
+              <OdooMark />
+            </a>
+          </td>
+          <td className="px-2 py-2 text-center">
+            <DocuSignCell rowId={row.id} url={row.docusignUrl} onSaved={(v) => updateField("docusignUrl", v)} />
+          </td>
+        </>
+      )}
 
-      {/* Odoo SO link */}
-      <td className="px-2 py-2 text-center">
-        <a
-          href={row.odooSoUrl ?? undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`inline-flex items-center justify-center w-6 h-6 rounded-full transition-opacity ${
-            row.odooSoUrl
-              ? "bg-[#714B67] hover:opacity-80"
-              : row.so
-              ? "bg-gray-400 cursor-default"
-              : "bg-[#714B67] opacity-30 cursor-default"
-          }`}
-          title={row.odooSoUrl ? "Open Sales Order in Odoo" : row.so ? "SO has no linked project" : "No Odoo Sales Order"}
-          onClick={(e) => !row.odooSoUrl && e.preventDefault()}
-        >
-          <OdooMark />
-        </a>
-      </td>
-
-      {/* DocuSign */}
-      <td className="px-2 py-2 text-center">
-        <DocuSignCell rowId={row.id} url={row.docusignUrl} onSaved={(v) => updateField("docusignUrl", v)} />
-      </td>
-
-      {/* Start date */}
+      {/* Both views: Start, End, Effort Hrs, SO */}
       <td className="px-2 py-1 whitespace-nowrap text-gray-700">
         {fmtDate(row.startDate)}
       </td>
-
-      {/* End date */}
       <td className="px-2 py-1 whitespace-nowrap text-gray-700">
         {fmtDate(row.endDate)}
       </td>
-
-      {/* Effort Hrs */}
       <td className="px-2 py-1 text-right text-gray-800">
         {row.soldHrs != null && row.soldHrs > 0 ? row.soldHrs : ""}
       </td>
-
-      {/* SO */}
       <td className="px-2 py-1 text-center text-gray-500">
         {row.so ?? ""}
       </td>
 
-      {/* Comments */}
-      <td className="px-2 py-1">
-        <EditableCell rowId={row.id} field="comments"
-          value={row.comments} type="text"
-          onSaved={(v) => updateField("comments", (v as string | null))}
-          className="text-gray-700 text-xs" placeholder="…" />
-      </td>
-
-      {/* Approved */}
-      <td className="px-2 py-1 text-center">
-        <ApprovedCheckbox
-          rowId={row.id}
-          checked={row.approved}
-          onChange={(v) => updateField("approved", v)}
-        />
-      </td>
-
-      {/* Admin-only columns */}
+      {/* Admin-only: SO # and Confirmation (between SO and Comments) */}
       {!showMonths && (
         <>
-          <td className="px-2 py-1">
-            <OfficeDropdown
-              rowId={row.id}
-              value={row.office}
-              onSaved={(v) => updateField("office", v)}
-            />
-          </td>
           <td className="px-2 py-1">
             <EditableCell
               rowId={row.id}
@@ -196,7 +166,33 @@ export function ProjectRow({ initialRow, showMonths = true }: ProjectRowProps) {
         </>
       )}
 
-      {/* Monthly columns */}
+      {/* Both views: Comments, Approved */}
+      <td className="px-2 py-1">
+        <EditableCell rowId={row.id} field="comments"
+          value={row.comments} type="text"
+          onSaved={(v) => updateField("comments", (v as string | null))}
+          className="text-gray-700 text-xs" placeholder="…" />
+      </td>
+      <td className="px-2 py-1 text-center">
+        <ApprovedCheckbox
+          rowId={row.id}
+          checked={row.approved}
+          onChange={(v) => updateField("approved", v)}
+        />
+      </td>
+
+      {/* Admin-only: Office (after Approved) */}
+      {!showMonths && (
+        <td className="px-2 py-1">
+          <OfficeDropdown
+            rowId={row.id}
+            value={row.office}
+            onSaved={(v) => updateField("office", v)}
+          />
+        </td>
+      )}
+
+      {/* Planning-only: monthly columns */}
       {showMonths && VISIBLE_MONTHS.map((month, i) => {
         const hours = projectedMonthly[month.key] ?? 0;
         const fte = hours > 0 ? hoursToFte(hours, month.workdayHours) : null;
@@ -309,14 +305,14 @@ function ApprovedCheckbox({ rowId, checked, onChange }: {
   onChange: (v: boolean) => void;
 }) {
   const toggle = async (val: boolean) => {
-    onChange(val); // optimistic — update immediately
+    onChange(val);
     try {
       const res = await fetch(`/api/planning/${rowId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ approved: val }),
       });
-      if (!res.ok) onChange(!val); // revert on failure
+      if (!res.ok) onChange(!val);
     } catch {
       onChange(!val);
     }
