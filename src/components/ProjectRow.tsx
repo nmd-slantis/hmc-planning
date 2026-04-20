@@ -60,6 +60,30 @@ function HubSpotMark() {
   );
 }
 
+const HS_STAGE_MAP: Record<string, { label: string; cls: string }> = {
+  closedwon:                { label: "Closed Won",    cls: "bg-emerald-100 text-emerald-700" },
+  "969753704":              { label: "Closed Won",    cls: "bg-emerald-100 text-emerald-700" },
+  closedlost:               { label: "Closed Lost",   cls: "bg-rose-100 text-rose-600"       },
+  appointmentscheduled:     { label: "Scheduled",     cls: "bg-blue-100 text-blue-700"       },
+  qualifiedtobuy:           { label: "Qualified",     cls: "bg-blue-100 text-blue-700"       },
+  presentationscheduled:    { label: "Presentation",  cls: "bg-violet-100 text-violet-700"   },
+  decisionmakerboughtin:    { label: "Decision Maker",cls: "bg-violet-100 text-violet-700"   },
+  contractsent:             { label: "Contract Sent", cls: "bg-amber-100 text-amber-700"     },
+};
+
+function StageCell({ stageId }: { stageId: string | null }) {
+  if (!stageId) return <span className="text-gray-400">—</span>;
+  const entry = HS_STAGE_MAP[stageId];
+  if (entry) {
+    return (
+      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${entry.cls}`}>
+        {entry.label}
+      </span>
+    );
+  }
+  return <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600">{stageId}</span>;
+}
+
 export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], linkedSos = [], onSoLink }: ProjectRowProps) {
   const [row, setRow] = useState<PlanningRow>(initialRow);
 
@@ -124,6 +148,9 @@ export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], 
           </td>
           <td className="px-2 py-2 text-center">
             <DocuSignCell rowId={row.id} url={row.docusignUrl} onSaved={(v) => updateField("docusignUrl", v)} />
+          </td>
+          <td className="px-2 py-1">
+            <StageCell stageId={row.hsStage} />
           </td>
         </>
       )}

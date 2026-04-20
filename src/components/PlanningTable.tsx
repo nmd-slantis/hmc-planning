@@ -36,9 +36,9 @@ const GROUP_STYLE: Record<string, { header: string; bullet: string }> = {
 const PLANNING_BASE_WIDTHS = [300, 95, 95, 58, 75, 150, 80];
 const PLANNING_BASE_TOTAL  = PLANNING_BASE_WIDTHS.reduce((a, b) => a + b, 0); // 853
 
-// Admin: Name, HS, Odoo, DS, Start, End, EffortHrs, SO, SO#, Confirmation, Comments, Approved, Office
-const ADMIN_COL_WIDTHS = [300, 36, 36, 36, 95, 95, 58, 75, 80, 120, 150, 80, 140];
-const ADMIN_TOTAL      = ADMIN_COL_WIDTHS.reduce((a, b) => a + b, 0); // 1301
+// Admin: Name, HS, Odoo, DS, Stage, Start, End, EffortHrs, SO, SO#, Confirmation, Comments, Approved, Office
+const ADMIN_COL_WIDTHS = [300, 36, 36, 36, 110, 95, 95, 58, 75, 80, 120, 150, 80, 140];
+const ADMIN_TOTAL      = ADMIN_COL_WIDTHS.reduce((a, b) => a + b, 0);
 
 function TableColgroup({ showMonths }: { showMonths: boolean }) {
   if (showMonths) {
@@ -168,7 +168,7 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
   const groups = rawGroups.map((g) => ({ ...g, rows: sortRows(g.rows) }));
 
   // Number of non-name columns after the sticky Name cell (for group header colSpan)
-  const groupColSpan = showMonths ? 6 : 12;
+  const groupColSpan = showMonths ? 6 : 13;
 
   return (
     <div className="flex flex-col gap-2">
@@ -247,7 +247,7 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
                   )}
                 </th>
 
-                {/* Admin-only: HS, Odoo, DS icons */}
+                {/* Admin-only: HS, Odoo, DS icons + Stage */}
                 {!showMonths && (
                   <>
                     <th className="px-2 py-1.5 text-center">
@@ -273,16 +273,16 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
                         <circle cx="20.5" cy="8" r="2" fill="white" />
                       </svg>
                     </th>
+                    <th className="px-2 py-1.5 text-left">Stage</th>
                   </>
                 )}
 
                 {/* Both views: Start, End, EffortHrs, SO */}
                 {(["startDate","endDate","soldHrs","so"] as const).map((key) => {
                   const labels: Record<string, string> = { startDate: "Start", endDate: "End", soldHrs: "Effort Hrs", so: "SO" };
-                  const aligns: Record<string, string> = { startDate: "text-left", endDate: "text-left", soldHrs: "text-right", so: "text-center" };
                   const active = sortKey === key;
                   return (
-                    <th key={key} className={`px-2 py-1.5 ${aligns[key]} cursor-pointer select-none hover:text-white transition-colors ${active ? "text-[#FF7700]" : ""}`}
+                    <th key={key} className={`px-2 py-1.5 text-left cursor-pointer select-none hover:text-white transition-colors ${active ? "text-[#FF7700]" : ""}`}
                       onClick={() => handleSort(key)}>
                       <span className="inline-flex items-center gap-1">{labels[key]} {sortIndicator(key)}</span>
                     </th>
@@ -292,14 +292,14 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
                 {/* Admin-only: SO# and Confirmation (between SO and Comments) */}
                 {!showMonths && (
                   <>
-                    <th className="px-2 py-1.5 text-right border-l border-gray-700">SO #</th>
+                    <th className="px-2 py-1.5 text-left border-l border-gray-700">SO #</th>
                     <th className="px-2 py-1.5 text-left border-l border-gray-700">SO Confirmation</th>
                   </>
                 )}
 
                 {/* Both views: Comments, Approved */}
                 <th className="px-2 py-1.5 text-left">Comments</th>
-                <th className="px-2 py-1.5 text-center">Approved?</th>
+                <th className="px-2 py-1.5 text-left">Approved?</th>
 
                 {/* Admin-only: Office */}
                 {!showMonths && (
@@ -310,16 +310,16 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
                 {showMonths && VISIBLE_MONTHS.map((m, i) => (
                   <React.Fragment key={m.key}>
                     <th
-                      className={`px-1 py-1.5 text-right cursor-pointer select-none hover:text-white transition-colors border-r-2 border-gray-600 ${
+                      className={`px-1 py-1.5 text-left cursor-pointer select-none hover:text-white transition-colors border-r-2 border-gray-600 ${
                         i === 0 ? "border-l-2 border-gray-600"
                         : m.quarterStart ? "border-l-2 border-gray-600"
                         : "border-l border-gray-700"
                       } ${sortKey === m.key ? "text-[#FF7700]" : ""}`}
                       onClick={() => handleSort(m.key)}
                     >
-                      <span className="inline-flex items-center justify-end gap-0.5">Hrs {sortIndicator(m.key)}</span>
+                      <span className="inline-flex items-center gap-0.5">Hrs {sortIndicator(m.key)}</span>
                     </th>
-                    <th className="px-1 py-1.5 text-right bg-gray-800/40">FTE</th>
+                    <th className="px-1 py-1.5 text-left bg-gray-800/40">FTE</th>
                   </React.Fragment>
                 ))}
               </tr>
