@@ -16,6 +16,16 @@ interface OfficeDropdownProps {
 
 // Shared across all instances — fetched once, updated in-place on mutations.
 let _cachedOptions: OfficeOption[] | null = null;
+let _fetching = false;
+
+function prewarmOfficeCache() {
+  if (_cachedOptions || _fetching) return;
+  _fetching = true;
+  fetch("/api/offices")
+    .then((r) => r.json())
+    .then((data: OfficeOption[]) => { _cachedOptions = data; _fetching = false; })
+    .catch(() => { _fetching = false; });
+}
 
 export function OfficeDropdown({ rowId, value, onSaved }: OfficeDropdownProps) {
   const [open, setOpen] = useState(false);
@@ -32,7 +42,7 @@ export function OfficeDropdown({ rowId, value, onSaved }: OfficeDropdownProps) {
   const searchRef = useRef<HTMLInputElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { setMounted(true); prewarmOfficeCache(); }, []);
   useEffect(() => {
     if (open) setTimeout(() => searchRef.current?.focus(), 0);
   }, [open]);

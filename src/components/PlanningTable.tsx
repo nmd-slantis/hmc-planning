@@ -57,11 +57,11 @@ function TableColgroup({ showMonths }: { showMonths: boolean }) {
   return (
     <colgroup>
       {ADMIN_COL_WIDTHS.map((w, i) =>
-        // Last column (Office) has no explicit width so it absorbs extra viewport space.
-        // All other columns keep their fixed px widths.
-        i < ADMIN_COL_WIDTHS.length - 1
-          ? <col key={i} style={{ width: `${w}px` }} />
-          : <col key={i} style={{ minWidth: `${w}px` }} />
+        // Comments column (index 11) has no fixed width — absorbs extra viewport space.
+        // minWidth keeps it at least as wide as in the Planning view.
+        i === 11
+          ? <col key={i} style={{ minWidth: `${w}px` }} />
+          : <col key={i} style={{ width: `${w}px` }} />
       )}
     </colgroup>
   );
@@ -341,7 +341,7 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
           ref={bodyScrollRef}
           style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 220px)", scrollbarGutter: "stable" }}
         >
-          <div style={{ minWidth: TABLE_MIN_WIDTH, display: "flex", flexDirection: "column", gap: "8px", paddingBottom: "8px" }}>
+          <div style={{ width: "100%", minWidth: TABLE_MIN_WIDTH, display: "flex", flexDirection: "column", gap: "8px", paddingBottom: "8px" }}>
 
             {groups.map(({ label, rows }) => {
               const style = GROUP_STYLE[label] ?? { header: "bg-gray-500 text-white", bullet: "bg-gray-300" };
