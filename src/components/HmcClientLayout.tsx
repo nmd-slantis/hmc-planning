@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { CollapsibleHeader } from "./CollapsibleHeader";
 import { PlanningTable } from "./PlanningTable";
 import { ServiceOrdersTable } from "./ServiceOrdersTable";
+import { prewarmOfficeCache } from "./OfficeDropdown";
 import type { PlanningRow, ServiceOrder } from "@/types/planning";
 
 export type ActiveTab = "planning" | "admin" | "service-orders";
@@ -27,6 +28,8 @@ export function HmcClientLayout({
 }: HmcClientLayoutProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>("planning");
   const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>(initialServiceOrders);
+
+  useEffect(() => { prewarmOfficeCache(); }, []);
 
   // planningId → SOs linked to that row
   const soByPlanningId = useMemo(() => {

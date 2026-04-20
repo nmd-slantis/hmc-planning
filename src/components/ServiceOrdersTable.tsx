@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ProjectRelationCell } from "./ProjectRelationCell";
 import type { ServiceOrder, PlanningRow } from "@/types/planning";
 
@@ -76,6 +76,14 @@ export function ServiceOrdersTable({
   const [newName, setNewName] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  const nextSoNoPlaceholder = useMemo(() => {
+    const nums = serviceOrders
+      .map((so) => parseInt(so.serviceOrderNo ?? ""))
+      .filter((n) => !isNaN(n));
+    const max = nums.length > 0 ? Math.max(...nums) : 0;
+    return String(max + 1);
+  }, [serviceOrders]);
+
   const handleCreate = async () => {
     if (!newSoNo.trim() && !newName.trim()) return;
     const res = await fetch("/api/service-orders", {
@@ -114,29 +122,42 @@ export function ServiceOrdersTable({
     <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
       <table className="w-full text-xs" style={{ tableLayout: "fixed", borderCollapse: "collapse" }}>
         <colgroup>
+          <col style={{ width: "40px" }} />
           <col style={{ width: "120px" }} />
           <col style={{ width: "280px" }} />
           <col />
-          <col style={{ width: "32px" }} />
         </colgroup>
         <thead>
           <tr className="bg-[#202022] text-gray-400 text-[11px] tracking-wide uppercase select-none">
+            <th className="px-2 py-2.5" />
             <th className="px-4 py-2.5 text-left font-medium">SO #</th>
             <th className="px-4 py-2.5 text-left font-medium">Name</th>
             <th className="px-4 py-2.5 text-left font-medium">Project / Deal</th>
-            <th className="px-2 py-2.5" />
           </tr>
         </thead>
         <tbody>
           {serviceOrders.length === 0 && !creating && (
             <tr>
               <td colSpan={4} className="px-4 py-10 text-center text-xs text-gray-400">
-                No service orders yet — click &ldquo;New service order&rdquo; below to add one.
+                No service orders yet — click the button below to add one.
               </td>
             </tr>
           )}
           {serviceOrders.map((so) => (
             <tr key={so.id} className="border-b border-gray-100 bg-white hover:brightness-[0.97] transition-all group">
+              {/* Action cell: pencil + X on hover */}
+              <td className="px-2 py-2 text-center">
+                <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => handleDelete(so.id)}
+                    disabled={deleting === so.id}
+                    className="w-5 h-5 flex items-center justify-center rounded-full text-gray-400 hover:text-rose-500 hover:bg-rose-50 transition-colors text-[10px]"
+                    title="Delete"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </td>
               <td className="px-4 py-2">
                 <EditText
                   value={so.serviceOrderNo}
@@ -159,20 +180,21 @@ export function ServiceOrdersTable({
                   onLink={(newIds) => onUpdate({ ...so, projectIds: newIds })}
                 />
               </td>
-              <td className="px-2 py-2">
-                <button
-                  onClick={() => handleDelete(so.id)}
-                  disabled={deleting === so.id}
-                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-rose-500 transition-opacity text-xs px-1 py-0.5"
-                >
-                  ✕
-                </button>
-              </td>
             </tr>
           ))}
 
           {creating && (
             <tr className="border-b border-gray-100 bg-orange-50/50">
+              {/* Big circle confirm button */}
+              <td className="px-2 py-2 text-center">
+                <button
+                  onClick={handleCreate}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-[#FF7700] text-white hover:opacity-90 transition-opacity text-sm font-bold shadow-sm mx-auto"
+                  title="Save"
+                >
+                  ✓
+                </button>
+              </td>
               <td className="px-4 py-2">
                 <input
                   autoFocus
@@ -182,8 +204,8 @@ export function ServiceOrdersTable({
                     if (e.key === "Enter") handleCreate();
                     if (e.key === "Escape") setCreating(false);
                   }}
-                  placeholder="SO #"
-                  className="w-full outline-none bg-transparent border-b border-[#FF7700] text-xs px-0.5 py-0.5 placeholder:text-gray-400"
+                  placeholder={nextSoNoPlaceholder}
+                  className="w-full outline-none bg-transparent border-b border-[#FF7700] text-xs px-0.5 py-0.5 placeholder:text-gray-300"
                 />
               </td>
               <td className="px-4 py-2">
@@ -199,12 +221,14 @@ export function ServiceOrdersTable({
                 />
               </td>
               <td className="px-4 py-2 text-gray-400 text-xs italic">
-                Link projects after saving
-              </td>
-              <td className="px-2 py-2">
-                <div className="flex items-center gap-1">
-                  <button onClick={handleCreate} className="text-[#FF7700] text-xs px-1 py-0.5">✓</button>
-                  <button onClick={() => setCreating(false)} className="text-gray-400 text-xs px-1 py-0.5">✕</button>
+                <div className="flex items-center gap-2">
+                  <span>Link projects after saving</span>
+                  <button
+                    onClick={() => { setCreating(false); setNewSoNo(""); setNewName(""); }}
+                    className="text-gray-400 hover:text-gray-600 text-[10px] ml-auto"
+                  >
+                    ✕
+                  </button>
                 </div>
               </td>
             </tr>

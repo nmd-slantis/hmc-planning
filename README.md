@@ -21,6 +21,7 @@ Planning coordination tool between /slantis team and HMC Architects — merges O
 - [ ] Build user management admin UI (currently manual via Turso dashboard)
 - [ ] Month visibility toggle UI (currently `hidden: true` in `months.ts` only)
 - [ ] Verify SO column returns human-readable name (currently numeric ID)
+- [ ] Add pencil (✎) edit trigger to Service Orders rows (currently click-to-edit via EditText)
 
 ---
 
@@ -35,6 +36,16 @@ npm run dev            # → http://localhost:3000
 ---
 
 ## Session Log
+
+### 2026-04-20
+- Added Service Orders third tab: Prisma models (`ServiceOrder` + `ServiceOrderProject`), API routes (GET/POST, PATCH/DELETE), full CRUD `ServiceOrdersTable` component
+- Bidirectional relations: Admin SO# column → single-select Service Orders picker (`SoRelationCell`); Service Orders Project/Deal → multi-select back to planning rows (`ProjectRelationCell`)
+- HubSpot Stage column in Administration (after icons): colored pills via `HS_STAGE_MAP` + `StageCell`
+- Office dropdown pre-warm: `prewarmOfficeCache()` exported and called in `HmcClientLayout` `useEffect` at page load
+- Removed row count "185 projects · Odoo + HubSpot" from header
+- All table headers left-aligned and uppercase across all tabs
+- Table full-width fix: Comments `col` has no fixed width (absorbs extra viewport); inner container block layout
+- Service Orders UX: big orange circle ✓ at left of new row; X delete on hover; auto SO# placeholder = max+1
 
 ### 2026-04-17 (evening)
 - Removed collapsible header toggle — single compact black bar with title, tab pills, sign-out inline

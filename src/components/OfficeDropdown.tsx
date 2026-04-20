@@ -18,7 +18,7 @@ interface OfficeDropdownProps {
 let _cachedOptions: OfficeOption[] | null = null;
 let _fetching = false;
 
-function prewarmOfficeCache() {
+export function prewarmOfficeCache() {
   if (_cachedOptions || _fetching) return;
   _fetching = true;
   fetch("/api/offices")

@@ -60,7 +60,7 @@ function TableColgroup({ showMonths }: { showMonths: boolean }) {
         // Comments column (index 11) has no fixed width — absorbs extra viewport space.
         // minWidth keeps it at least as wide as in the Planning view.
         i === 11
-          ? <col key={i} style={{ minWidth: `${w}px` }} />
+          ? <col key={i} />
           : <col key={i} style={{ width: `${w}px` }} />
       )}
     </colgroup>
@@ -341,9 +341,9 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
           ref={bodyScrollRef}
           style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 220px)", scrollbarGutter: "stable" }}
         >
-          <div style={{ width: "100%", minWidth: TABLE_MIN_WIDTH, display: "flex", flexDirection: "column", gap: "8px", paddingBottom: "8px" }}>
+          <div style={{ width: "100%", minWidth: TABLE_MIN_WIDTH, paddingBottom: "8px" }}>
 
-            {groups.map(({ label, rows }) => {
+            {groups.map(({ label, rows }, groupIndex) => {
               const style = GROUP_STYLE[label] ?? { header: "bg-gray-500 text-white", bullet: "bg-gray-300" };
               const isCollapsed = collapsed[label] ?? true;
 
@@ -359,7 +359,7 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
               }
 
               return (
-                <div key={label} className="rounded-xl border border-gray-200 shadow-sm" style={{ overflow: "clip" }}>
+                <div key={label} className="rounded-xl border border-gray-200 shadow-sm" style={{ overflow: "clip", marginTop: groupIndex > 0 ? "8px" : 0 }}>
                   <table className="text-xs" style={TABLE_STYLE}>
                     <TableColgroup showMonths={showMonths} />
                     <thead>
