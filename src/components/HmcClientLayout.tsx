@@ -16,7 +16,6 @@ interface HmcClientLayoutProps {
   initialOffices: Office[];
   email: string | null | undefined;
   today: string;
-  rowCount: number;
   signOut: () => Promise<void>;
 }
 
@@ -26,7 +25,6 @@ export function HmcClientLayout({
   initialOffices,
   email,
   today,
-  rowCount,
   signOut,
 }: HmcClientLayoutProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>("planning");
@@ -61,7 +59,6 @@ export function HmcClientLayout({
       <CollapsibleHeader
         email={email}
         today={today}
-        rowCount={rowCount}
         signOut={signOut}
         activeTab={activeTab}
         onTabChange={setActiveTab}

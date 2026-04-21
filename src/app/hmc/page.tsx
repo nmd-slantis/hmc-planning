@@ -55,8 +55,7 @@ export default async function HmcPage() {
         initialOffices={offices}
         email={session.user?.email}
         today={today}
-        rowCount={rows.length}
-        signOut={signOutAction}
+signOut={signOutAction}
       />
 
       <footer className="px-6 py-4 text-center text-[10px] text-gray-400">
