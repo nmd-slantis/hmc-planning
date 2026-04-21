@@ -96,7 +96,7 @@ export async function fetchHubspotDeals(): Promise<HubspotDeal[]> {
   return allDeals;
 }
 
-interface HubSpotPipelineStage { id: string; label: string; }
+interface HubSpotPipelineStage { id: string; label: string; displayOrder: number; }
 interface HubSpotPipeline { id: string; stages: HubSpotPipelineStage[]; }
 
 export async function fetchDealPipelineStages(): Promise<Map<string, string>> {
@@ -108,6 +108,23 @@ export async function fetchDealPipelineStages(): Promise<Map<string, string>> {
     for (const pipeline of data.results ?? []) {
       for (const stage of pipeline.stages ?? []) {
         map.set(stage.id, stage.label);
+      }
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
+export async function fetchDealPipelineStageOrders(): Promise<Map<string, number>> {
+  try {
+    const data = await hs<{ results: HubSpotPipeline[] }>("/crm/v3/pipelines/deals", {
+      next: { revalidate: 3600 },
+    } as RequestInit);
+    const map = new Map<string, number>();
+    for (const pipeline of data.results ?? []) {
+      for (const stage of pipeline.stages ?? []) {
+        map.set(stage.id, stage.displayOrder ?? 0);
       }
     }
     return map;

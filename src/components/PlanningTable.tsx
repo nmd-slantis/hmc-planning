@@ -105,6 +105,12 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
         const cmp = av < bv ? -1 : av > bv ? 1 : 0;
         return sortDir === "asc" ? cmp : -cmp;
       }
+      if (sortKey === "hsStageOrder") {
+        const av = a.hsStageOrder ?? 9999;
+        const bv = b.hsStageOrder ?? 9999;
+        const cmp = av - bv;
+        return sortDir === "asc" ? cmp : -cmp;
+      }
       const av = String((a as unknown as Record<string, unknown>)[sortKey] ?? "");
       const bv = String((b as unknown as Record<string, unknown>)[sortKey] ?? "");
       const cmp = av < bv ? -1 : av > bv ? 1 : 0;
@@ -268,7 +274,10 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
                         <circle cx="12" cy="5.5" r="2" fill="white" />
                       </svg>
                     </th>
-                    <th className="px-2 py-1.5 text-left">Stage</th>
+                    <th className={`px-2 py-1.5 text-left cursor-pointer select-none hover:text-white transition-colors ${sortKey === "hsStageOrder" ? "text-[#FF7700]" : ""}`}
+                      onClick={() => handleSort("hsStageOrder")}>
+                      <span className="inline-flex items-center gap-1">Stage {sortIndicator("hsStageOrder")}</span>
+                    </th>
                   </>
                 )}
 

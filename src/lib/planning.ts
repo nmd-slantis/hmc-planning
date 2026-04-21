@@ -1,5 +1,5 @@
 import { fetchOdooSosByNames, fetchOdooProjectDates, type OdooSoData, type OdooProjectDates } from "./odoo";
-import { fetchHubspotDeals, fetchHubSpotPortalId, fetchDealPipelineStages } from "./hubspot";
+import { fetchHubspotDeals, fetchHubSpotPortalId, fetchDealPipelineStages, fetchDealPipelineStageOrders } from "./hubspot";
 import { prisma } from "./prisma";
 import type { PlanningRow, RowStatus } from "@/types/planning";
 
@@ -42,11 +42,12 @@ function dateToIso(d: Date | string | null | undefined): string | null {
 }
 
 export async function buildPlanningRows(): Promise<PlanningRow[]> {
-  const [hubspotDeals, allManualData, hsPortalId, stageLabels] = await Promise.all([
+  const [hubspotDeals, allManualData, hsPortalId, stageLabels, stageOrders] = await Promise.all([
     fetchHubspotDeals().catch((e) => { console.error("HubSpot fetch failed:", e); return []; }),
     prisma.manualData.findMany(),
     fetchHubSpotPortalId().catch(() => null),
     fetchDealPipelineStages().catch(() => new Map<string, string>()),
+    fetchDealPipelineStageOrders().catch(() => new Map<string, number>()),
   ]);
 
   const manualMap = new Map(
@@ -215,6 +216,7 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
     const hsPipeline = d.properties.pipeline ?? null;
     const hsStage = d.properties.dealstage ?? null;
     const hsStageLabel = hsStage ? (stageLabels.get(hsStage) ?? null) : null;
+    const hsStageOrder = hsStage != null ? (stageOrders.get(hsStage) ?? null) : null;
 
     rows.push({
       id,
@@ -236,6 +238,7 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
       hsPipeline,
       hsStage,
       hsStageLabel,
+      hsStageOrder,
       hsUrl: hsPortalId ? `https://app.hubspot.com/contacts/${hsPortalId}/deal/${d.id}` : null,
       odooSoUrl: soData
         ? `${process.env.ODOO_URL}/web#id=${soData.id}&cids=1-2-3&menu_id=336&action=483&model=sale.order&view_type=form`
