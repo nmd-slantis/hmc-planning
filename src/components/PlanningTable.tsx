@@ -37,8 +37,8 @@ const GROUP_STYLE: Record<string, { header: string; bullet: string }> = {
 const PLANNING_BASE_WIDTHS = [300, 95, 95, 58, 75, 150, 80];
 const PLANNING_BASE_TOTAL  = PLANNING_BASE_WIDTHS.reduce((a, b) => a + b, 0); // 853
 
-// Admin: Name, HS, Odoo, Stage, Start, End, EffortHrs, SO, SO#, Confirmation, Comments, Approved, Office
-const ADMIN_COL_WIDTHS = [300, 36, 36, 110, 95, 95, 58, 75, 80, 120, 150, 80, 140];
+// Admin: Name, HS, Odoo, Stage, Start, End, EffortHrs, SO, SO#, Confirmation, Approved, Office, Comments
+const ADMIN_COL_WIDTHS = [300, 36, 36, 110, 95, 95, 58, 75, 80, 120, 80, 140, 150];
 const ADMIN_TOTAL      = ADMIN_COL_WIDTHS.reduce((a, b) => a + b, 0);
 
 function TableColgroup({ showMonths }: { showMonths: boolean }) {
@@ -58,8 +58,8 @@ function TableColgroup({ showMonths }: { showMonths: boolean }) {
   return (
     <colgroup>
       {ADMIN_COL_WIDTHS.map((w, i) =>
-        // Comments column (index 10) has no fixed width — absorbs extra viewport space.
-        i === 10
+        // Comments column (index 12) has no fixed width — absorbs extra viewport space.
+        i === 12
           ? <col key={i} />
           : <col key={i} style={{ width: `${w}px` }} />
       )}
@@ -297,13 +297,20 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
                   </>
                 )}
 
-                {/* Both views: Comments, Approved */}
-                <th className="px-2 py-1.5 text-left">Comments</th>
+                {/* Planning-only: Comments (in Details tab it moves to the end) */}
+                {showMonths && <th className="px-2 py-1.5 text-left">Comments</th>}
+
+                {/* Both views: Approved */}
                 <th className="px-2 py-1.5 text-left">Approved?</th>
 
                 {/* Admin-only: Office */}
                 {!showMonths && (
                   <th className="px-2 py-1.5 text-left border-l border-gray-700">Office</th>
+                )}
+
+                {/* Admin-only: Comments (at end in Details tab) */}
+                {!showMonths && (
+                  <th className="px-2 py-1.5 text-left border-l border-gray-700">Comments</th>
                 )}
 
                 {/* Planning-only month sub-headers */}

@@ -363,13 +363,17 @@ export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], 
         </>
       )}
 
-      {/* Both views: Comments, Approved */}
-      <td className="px-2 py-1">
-        <EditableCell rowId={row.id} field="comments"
-          value={row.comments} type="text"
-          onSaved={(v) => updateField("comments", (v as string | null))}
-          className="text-gray-700 text-xs" placeholder="…" />
-      </td>
+      {/* Planning-only: Comments (in Details tab it moves to the end) */}
+      {showMonths && (
+        <td className="px-2 py-1">
+          <EditableCell rowId={row.id} field="comments"
+            value={row.comments} type="text"
+            onSaved={(v) => updateField("comments", (v as string | null))}
+            className="text-gray-700 text-xs" placeholder="…" />
+        </td>
+      )}
+
+      {/* Both views: Approved */}
       <td className="px-2 py-1 text-center">
         <ApprovedCheckbox
           rowId={row.id}
@@ -378,7 +382,7 @@ export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], 
         />
       </td>
 
-      {/* Admin-only: Office (after Approved) */}
+      {/* Admin-only: Office */}
       {!showMonths && (
         <td className="px-2 py-1">
           <OfficeRelationCell
@@ -387,6 +391,16 @@ export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], 
             value={row.office}
             onSaved={(v) => updateField("office", v)}
           />
+        </td>
+      )}
+
+      {/* Admin-only: Comments (at end in Details tab) */}
+      {!showMonths && (
+        <td className="px-2 py-1">
+          <EditableCell rowId={row.id} field="comments"
+            value={row.comments} type="text"
+            onSaved={(v) => updateField("comments", (v as string | null))}
+            className="text-gray-700 text-xs" placeholder="…" />
         </td>
       )}
 
