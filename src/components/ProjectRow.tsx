@@ -162,6 +162,84 @@ function OfficeRelationCell({ rowId, offices, value, onSaved }: {
   );
 }
 
+function EditableSoldHrsCell({
+  rowId,
+  value,
+  liveValue,
+  isManual,
+  onSaved,
+}: {
+  rowId: string;
+  value: number | null;
+  liveValue: number | null;
+  isManual: boolean;
+  onSaved: (v: number | null, manual: boolean) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const commit = async () => {
+    setEditing(false);
+    const parsed = draft === "" ? null : parseFloat(draft);
+    const v = parsed == null || isNaN(parsed) || parsed <= 0 ? null : parsed;
+    if (v === value) return;
+    await fetch(`/api/planning/${rowId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ soldHrs: v, soldHrsManual: true }),
+    });
+    onSaved(v, true);
+  };
+
+  const resetToLive = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await fetch(`/api/planning/${rowId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ soldHrs: null, soldHrsManual: false }),
+    });
+    onSaved(liveValue, false);
+  };
+
+  if (editing) {
+    return (
+      <input
+        type="number"
+        autoFocus
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        className="outline-none bg-white border border-[#FF7700] rounded px-1 py-0.5 text-xs w-16 text-right"
+      />
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 group/hrs justify-end w-full">
+      <button
+        onClick={() => { setDraft(value != null ? String(value) : ""); setEditing(true); }}
+        className={`text-right text-xs hover:text-[#FF7700] transition-colors ${isManual ? "font-bold text-gray-800" : "text-gray-800"}`}
+        title={isManual ? "Manually set — click to edit" : "Click to edit"}
+      >
+        {value != null && value > 0 ? value : <span className="text-gray-300">—</span>}
+      </button>
+      {isManual && (
+        <button
+          onClick={resetToLive}
+          className="opacity-0 group-hover/hrs:opacity-100 text-[9px] text-gray-400 hover:text-[#FF7700] transition-all leading-none"
+          title="Restore live value from Odoo"
+        >
+          ⟳
+        </button>
+      )}
+    </span>
+  );
+}
+
 function EditableDateCell({
   rowId,
   field,
@@ -334,8 +412,14 @@ export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], 
           onSaved={(v, manual) => setRow((prev) => ({ ...prev, endDate: v, endDateManual: manual }))}
         />
       </td>
-      <td className="px-2 py-1 text-right text-gray-800">
-        {row.soldHrs != null && row.soldHrs > 0 ? row.soldHrs : ""}
+      <td className="px-2 py-1 text-right">
+        <EditableSoldHrsCell
+          rowId={row.id}
+          value={row.soldHrs}
+          liveValue={row.soldHrsLive}
+          isManual={row.soldHrsManual}
+          onSaved={(v, manual) => setRow((prev) => ({ ...prev, soldHrs: v, soldHrsManual: manual }))}
+        />
       </td>
       <td className="px-2 py-1 text-center text-gray-500">
         {row.so ?? ""}

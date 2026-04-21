@@ -34,6 +34,8 @@ export interface PlanningRow {
   endDateManual: boolean;
   effort: number | null;
   soldHrs: number | null;
+  soldHrsLive: number | null;
+  soldHrsManual: boolean;
   so: string | null;          // Sales Order number (Odoo only)
   monthlyData: Record<string, number>;  // { "aug-25": 80, "sep-25": 172, ... } hours
   status: RowStatus;

@@ -143,7 +143,7 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
       const needsDateSeed =
         (!existing?.startDateManual && storedStartStr !== canonicalStartStr) ||
         (!existing?.endDateManual   && storedEndStr   !== canonicalEndStr);
-      const needsSoldHrsSeed = existing?.soldHrs == null && !!soData;
+      const needsSoldHrsSeed = existing?.soldHrs == null && !!soData && !existing?.soldHrsManual;
       if (!needsDateSeed && !needsSoldHrsSeed) continue;
 
       const startDate = existing?.startDateManual ? existing.startDate : canonicalStart;
@@ -159,6 +159,7 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
       const upsertData = {
         id: rowId, source: "hubspot", sourceId: d.id, soSeeded: true,
         soldHrs, startDate, endDate,
+        soldHrsManual: existing?.soldHrsManual ?? false,
         startDateManual: existing?.startDateManual ?? false,
         endDateManual: existing?.endDateManual ?? false,
         effort: existing?.effort ?? null,
@@ -194,6 +195,11 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
       ? dateToIso(projDates.endDate)
       : dateToIso(parseHsDate(d.properties.project_end_date));
 
+    // Live soldHrs from Odoo SO
+    const rawHrs = soData?.x_studio_sold_hours;
+    const parsedLiveHrs = rawHrs !== false && rawHrs != null ? parseFloat(String(rawHrs)) : NaN;
+    const soldHrsLive = !isNaN(parsedLiveHrs) && parsedLiveHrs > 0 ? parsedLiveHrs : null;
+
     // Override with manual dates when the user has broken live sync
     const startDate = (manual?.startDateManual && isValidDate(manual?.startDate))
       ? dateToIso(manual.startDate)
@@ -201,6 +207,10 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
     const endDate = (manual?.endDateManual && isValidDate(manual?.endDate))
       ? dateToIso(manual.endDate)
       : liveEndDate;
+
+    const soldHrs = manual?.soldHrsManual && manual.soldHrs != null
+      ? manual.soldHrs
+      : (manual?.soldHrs ?? null);
 
     const hsPipeline = d.properties.pipeline ?? null;
     const hsStage = d.properties.dealstage ?? null;
@@ -217,7 +227,9 @@ export async function buildPlanningRows(): Promise<PlanningRow[]> {
       startDateManual: manual?.startDateManual ?? false,
       endDateManual: manual?.endDateManual ?? false,
       effort: manual?.effort ?? null,
-      soldHrs: manual?.soldHrs ?? null,
+      soldHrs,
+      soldHrsLive,
+      soldHrsManual: manual?.soldHrsManual ?? false,
       so: d.properties.sales_order ?? null,
       monthlyData: manual?.monthlyData ?? {},
       status: computeStatus(startDate, endDate),

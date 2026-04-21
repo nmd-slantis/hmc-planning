@@ -27,6 +27,7 @@ model ManualData {
   serviceOrderNo       String?
   serviceOrderFileUrl  String?
   serviceOrderFileName String?
+  soldHrsManual        Boolean   @default(false)
   startDateManual      Boolean   @default(false)
   endDateManual        Boolean   @default(false)
   updatedAt            DateTime  @updatedAt

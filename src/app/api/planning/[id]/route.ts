@@ -74,6 +74,10 @@ export async function PATCH(
     data.soldHrs = existing.soldHrs;
   }
 
+  data.soldHrsManual = body.soldHrsManual !== undefined
+    ? Boolean(body.soldHrsManual)
+    : (existing?.soldHrsManual ?? false);
+
   // Always preserve the seed flag so manual edits don't reset it
   data.soSeeded = existing?.soSeeded ?? false;
 
