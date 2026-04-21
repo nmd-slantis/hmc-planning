@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
+import { chipTextColor } from "@/lib/color";
 import { createPortal } from "react-dom";
 import { ProjectRelationCell } from "./ProjectRelationCell";
 import type { ServiceOrder, PlanningRow } from "@/types/planning";
@@ -13,16 +14,36 @@ interface ServiceOrdersTableProps {
   onDelete: (id: string) => void;
 }
 
+function ColorPickerCell({ color, onSave }: { color: string | null; onSave: (v: string) => void }) {
+  const [local, setLocal] = useState(color ?? "#6b7280");
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => { setLocal(color ?? "#6b7280"); }, [color]);
+  return (
+    <div className="flex items-center justify-center">
+      <button type="button" onClick={() => ref.current?.click()}
+        title="Pick color"
+        className="w-5 h-5 rounded-full border-2 hover:scale-110 transition-transform flex-shrink-0"
+        style={{ backgroundColor: local, borderColor: color ? local : "#d1d5db" }} />
+      <input ref={ref} type="color" value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={(e) => onSave(e.target.value)}
+        className="sr-only" aria-hidden />
+    </div>
+  );
+}
+
 function EditText({
   value,
   onSave,
   placeholder,
   className,
+  chipStyle,
 }: {
   value: string | null;
   onSave: (v: string | null) => void;
   placeholder?: string;
   className?: string;
+  chipStyle?: React.CSSProperties;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? "");
@@ -55,7 +76,10 @@ function EditText({
       className={`text-left text-xs group/cell ${className ?? ""}`}
     >
       {value ? (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 group-hover/cell:bg-gray-200 transition-colors">
+        <span
+          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium transition-opacity group-hover/cell:opacity-80"
+          style={chipStyle ?? { backgroundColor: "#f3f4f6", color: "#374151" }}
+        >
           {value}
         </span>
       ) : (
@@ -195,7 +219,7 @@ export function ServiceOrdersTable({
 
   const handleUpdate = async (
     id: string,
-    patch: Partial<Pick<ServiceOrder, "serviceOrderNo" | "name">>
+    patch: Partial<Pick<ServiceOrder, "serviceOrderNo" | "name" | "color">>
   ) => {
     const res = await fetch(`/api/service-orders/${id}`, {
       method: "PATCH",
@@ -218,6 +242,7 @@ export function ServiceOrdersTable({
         <colgroup>
           <col style={{ width: "40px" }} />
           <col style={{ width: "120px" }} />
+          <col style={{ width: "40px" }} />{/* color */}
           <col style={{ width: "280px" }} />
           <col style={{ width: "50px" }} />
           <col />
@@ -226,6 +251,7 @@ export function ServiceOrdersTable({
           <tr className="bg-[#2e2e30] text-gray-300 text-[10px] tracking-wider uppercase select-none" style={{ height: "36px" }}>
             <th className="px-2 py-2.5" />
             <th className="px-4 py-2.5 text-left font-medium">SO #</th>
+            <th className="px-2 py-2.5 text-center font-medium">Color</th>
             <th className="px-4 py-2.5 text-left font-medium">Name</th>
             <th className="px-2 py-2.5 text-center font-medium">
               <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 inline-block" aria-label="DocuSign">
@@ -241,6 +267,7 @@ export function ServiceOrdersTable({
               <input value={filters.soNo} onChange={sf("soNo")} placeholder="SO#…"
                 className="w-full bg-transparent text-gray-400 text-[10px] outline-none placeholder:text-gray-700 border-b border-transparent focus:border-gray-600" />
             </th>
+            <th className="px-1 py-0.5" />{/* color */}
             <th className="px-2 py-0.5">
               <input value={filters.name} onChange={sf("name")} placeholder="Name…"
                 className="w-full bg-transparent text-gray-400 text-[10px] outline-none placeholder:text-gray-700 border-b border-transparent focus:border-gray-600" />
@@ -255,7 +282,7 @@ export function ServiceOrdersTable({
         <tbody>
           {serviceOrders.length === 0 && !creating && (
             <tr>
-              <td colSpan={5} className="px-4 py-10 text-center text-xs text-gray-400">
+              <td colSpan={6} className="px-4 py-10 text-center text-xs text-gray-400">
                 No service orders yet — click the button below to add one.
               </td>
             </tr>
@@ -289,10 +316,17 @@ export function ServiceOrdersTable({
                   onSave={(v) => handleUpdate(so.id, { serviceOrderNo: v })}
                 />
               </td>
+              <td className="px-2 py-2">
+                <ColorPickerCell
+                  color={so.color}
+                  onSave={(c) => handleUpdate(so.id, { color: c })}
+                />
+              </td>
               <td className="px-4 py-2">
                 <EditText
                   value={so.name || null}
                   placeholder="Name…"
+                  chipStyle={so.color ? { backgroundColor: so.color, color: chipTextColor(so.color) } : undefined}
                   onSave={(v) => handleUpdate(so.id, { name: v ?? "" })}
                 />
               </td>
@@ -338,6 +372,7 @@ export function ServiceOrdersTable({
                   className="w-full outline-none bg-transparent border-b border-[#FF7700] text-xs px-0.5 py-0.5 placeholder:text-gray-300"
                 />
               </td>
+              <td className="px-2 py-2" />{/* color — set after saving */}
               <td className="px-4 py-2">
                 <input
                   value={newName}

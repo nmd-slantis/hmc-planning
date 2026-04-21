@@ -36,6 +36,7 @@ model ManualData {
 model OfficeOption {
   id           Int      @id @default(autoincrement())
   label        String   @unique
+  color        String?
   address      String?
   contactName  String?
   contactEmail String?
@@ -49,6 +50,7 @@ model ServiceOrder {
   id             String                @id @default(cuid())
   serviceOrderNo String?
   name           String                @default("")
+  color          String?
   docusignUrl    String?
   projects       ServiceOrderProject[]
   createdAt      DateTime              @default(now())

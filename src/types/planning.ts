@@ -2,6 +2,7 @@ export interface ServiceOrder {
   id: string;
   serviceOrderNo: string | null;
   name: string;
+  color: string | null;
   docusignUrl: string | null;
   projectIds: string[];
   createdAt: string;
@@ -11,6 +12,7 @@ export interface ServiceOrder {
 export interface Office {
   id: number;
   label: string;
+  color: string | null;
   address: string | null;
   contactName: string | null;
   contactEmail: string | null;

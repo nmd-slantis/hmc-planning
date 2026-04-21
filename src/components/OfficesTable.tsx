@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { Office, PlanningRow } from "@/types/planning";
+import { chipTextColor } from "@/lib/color";
 
 interface OfficesTableProps {
   offices: Office[];
@@ -11,16 +12,36 @@ interface OfficesTableProps {
   onDelete: (id: number) => void;
 }
 
+function ColorPickerCell({ color, onSave }: { color: string | null; onSave: (v: string) => void }) {
+  const [local, setLocal] = useState(color ?? "#6b7280");
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => { setLocal(color ?? "#6b7280"); }, [color]);
+  return (
+    <div className="flex items-center justify-center">
+      <button type="button" onClick={() => ref.current?.click()}
+        title="Pick color"
+        className="w-5 h-5 rounded-full border-2 hover:scale-110 transition-transform flex-shrink-0"
+        style={{ backgroundColor: local, borderColor: color ? local : "#d1d5db" }} />
+      <input ref={ref} type="color" value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={(e) => onSave(e.target.value)}
+        className="sr-only" aria-hidden />
+    </div>
+  );
+}
+
 function EditText({
   value,
   onSave,
   placeholder,
   className,
+  chipStyle,
 }: {
   value: string | null;
   onSave: (v: string | null) => void;
   placeholder?: string;
   className?: string;
+  chipStyle?: React.CSSProperties;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? "");
@@ -53,7 +74,10 @@ function EditText({
       className={`text-left text-xs group/cell w-full ${className ?? ""}`}
     >
       {value ? (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 group-hover/cell:bg-gray-200 transition-colors">
+        <span
+          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium transition-opacity group-hover/cell:opacity-80"
+          style={chipStyle ?? { backgroundColor: "#f3f4f6", color: "#374151" }}
+        >
           {value}
         </span>
       ) : (
@@ -115,7 +139,7 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
     }
   };
 
-  const handleUpdate = async (id: number, patch: Partial<Pick<Office, "label" | "address" | "contactName" | "contactEmail" | "notes">>) => {
+  const handleUpdate = async (id: number, patch: Partial<Pick<Office, "label" | "color" | "address" | "contactName" | "contactEmail" | "notes">>) => {
     const res = await fetch(`/api/offices/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -136,6 +160,7 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
       <table className="w-full text-xs" style={{ tableLayout: "fixed", borderCollapse: "collapse" }}>
         <colgroup>
           <col style={{ width: "40px" }} />
+          <col style={{ width: "40px" }} />{/* color */}
           <col style={{ width: "180px" }} />
           <col style={{ width: "200px" }} />
           <col style={{ width: "160px" }} />
@@ -146,6 +171,7 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
         <thead>
           <tr className="bg-[#2e2e30] text-gray-300 text-[10px] tracking-wider uppercase select-none" style={{ height: "36px" }}>
             <th className="px-2 py-2.5" />
+            <th className="px-2 py-2.5 text-center font-medium">Color</th>
             <th className="px-4 py-2.5 text-left font-medium">Office</th>
             <th className="px-4 py-2.5 text-left font-medium">Address</th>
             <th className="px-4 py-2.5 text-left font-medium">Contact</th>
@@ -155,6 +181,7 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
           </tr>
           <tr className="bg-[#111113]" style={{ height: "28px" }}>
             <th className="px-1 py-0.5" />
+            <th className="px-1 py-0.5" />{/* color */}
             {(["label","address","contact","email","notes"] as const).map((k) => (
               <th key={k} className="px-2 py-0.5">
                 <input value={filters[k]} onChange={sf(k)} placeholder="…"
@@ -167,7 +194,7 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
         <tbody>
           {offices.length === 0 && !creating && (
             <tr>
-              <td colSpan={7} className="px-4 py-10 text-center text-xs text-gray-400">
+              <td colSpan={8} className="px-4 py-10 text-center text-xs text-gray-400">
                 No offices yet — click the button below to add one.
               </td>
             </tr>
@@ -187,10 +214,17 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
                   ✕
                 </button>
               </td>
+              <td className="px-2 py-2">
+                <ColorPickerCell
+                  color={office.color}
+                  onSave={(c) => handleUpdate(office.id, { color: c })}
+                />
+              </td>
               <td className="px-4 py-2">
                 <EditText
                   value={office.label}
                   placeholder="Office name"
+                  chipStyle={office.color ? { backgroundColor: office.color, color: chipTextColor(office.color) } : undefined}
                   onSave={(v) => v && handleUpdate(office.id, { label: v })}
                 />
               </td>
@@ -239,6 +273,7 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
                   ✓
                 </button>
               </td>
+              <td className="px-2 py-2" />{/* color — set after saving */}
               <td className="px-4 py-2">
                 <input
                   autoFocus

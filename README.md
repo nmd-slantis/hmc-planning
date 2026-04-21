@@ -22,6 +22,7 @@ Planning coordination tool between /slantis team and HMC Architects — merges O
 - [ ] Build user management admin UI (currently manual via Turso dashboard)
 - [ ] Month visibility toggle UI (currently `hidden: true` in `months.ts` only)
 - [ ] Pipeline totals row — per-month total Hrs/FTE across all groups
+- [ ] Move Comments column in Details tab as far right as possible (after Office)
 
 ---
 

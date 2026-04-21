@@ -7,6 +7,7 @@ import { FileUploadCell } from "./FileUploadCell";
 import { SoRelationCell } from "./SoRelationCell";
 import { VISIBLE_MONTHS, hoursToFte, distributeHours } from "@/config/months";
 import type { PlanningRow, ServiceOrder, Office } from "@/types/planning";
+import { chipTextColor } from "@/lib/color";
 
 interface ProjectRowProps {
   initialRow: PlanningRow;
@@ -133,17 +134,28 @@ function OfficeRelationCell({ rowId, offices, value, onSaved }: {
 
   return (
     <>
-      <button ref={triggerRef} onClick={open ? close : openPanel}
-        className="w-full flex items-center gap-1 text-xs text-left group">
-        {value ? (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-700 text-[10px] font-medium truncate max-w-full">
-            {value}
-          </span>
-        ) : (
-          <span className="flex-1 text-gray-400">—</span>
-        )}
-        <span className="text-gray-400 flex-shrink-0 text-[10px] group-hover:text-gray-600">▾</span>
-      </button>
+      {/* look up color for the selected office */}
+      {(() => {
+        const officeColor = value ? (offices.find((o) => o.label === value)?.color ?? null) : null;
+        return (
+          <button ref={triggerRef} onClick={open ? close : openPanel}
+            className="w-full flex items-center gap-1 text-xs text-left group">
+            {value ? (
+              <span
+                className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium truncate max-w-full"
+                style={officeColor
+                  ? { backgroundColor: officeColor, color: chipTextColor(officeColor) }
+                  : { backgroundColor: "#e0f2fe", color: "#0369a1" }}
+              >
+                {value}
+              </span>
+            ) : (
+              <span className="flex-1 text-gray-400">—</span>
+            )}
+            <span className="text-gray-400 flex-shrink-0 text-[10px] group-hover:text-gray-600">▾</span>
+          </button>
+        );
+      })()}
       {mounted && createPortal(
         <>{open && <div className="fixed inset-0 z-[199]" onMouseDown={close} />}{panel}</>,
         document.body

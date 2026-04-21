@@ -13,7 +13,7 @@ export async function PATCH(
 
   const id = parseInt(params.id);
   const body = await req.json();
-  const { label, address, contactName, contactEmail, notes } = body;
+  const { label, color, address, contactName, contactEmail, notes } = body;
 
   if (label !== undefined && !label?.trim())
     return NextResponse.json({ error: "Label required" }, { status: 400 });
@@ -25,6 +25,7 @@ export async function PATCH(
     where: { id },
     data: {
       ...(label !== undefined ? { label: label.trim() } : {}),
+      ...(color !== undefined ? { color: color || null } : {}),
       ...(address !== undefined ? { address: address?.trim() || null } : {}),
       ...(contactName !== undefined ? { contactName: contactName?.trim() || null } : {}),
       ...(contactEmail !== undefined ? { contactEmail: contactEmail?.trim() || null } : {}),

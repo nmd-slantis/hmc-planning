@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { ServiceOrder } from "@/types/planning";
+import { chipTextColor } from "@/lib/color";
 
 interface SoRelationCellProps {
   planningId: string;
@@ -116,7 +117,12 @@ export function SoRelationCell({ planningId, serviceOrders, linkedSoId, onLink }
         className="w-full flex items-center gap-1 text-xs text-left group"
       >
         {linkedSo ? (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 text-[10px] font-medium truncate max-w-full">
+          <span
+            className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium truncate max-w-full"
+            style={linkedSo.color
+              ? { backgroundColor: linkedSo.color, color: chipTextColor(linkedSo.color) }
+              : { backgroundColor: "#ede9fe", color: "#6d28d9" }}
+          >
             {displayLabel}
           </span>
         ) : (

@@ -4,11 +4,12 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-function serializeSo(so: { id: string; serviceOrderNo: string | null; name: string; docusignUrl: string | null; projects: { planningId: string }[]; createdAt: Date; updatedAt: Date }) {
+function serializeSo(so: { id: string; serviceOrderNo: string | null; name: string; color: string | null; docusignUrl: string | null; projects: { planningId: string }[]; createdAt: Date; updatedAt: Date }) {
   return {
     id: so.id,
     serviceOrderNo: so.serviceOrderNo,
     name: so.name,
+    color: so.color,
     docusignUrl: so.docusignUrl,
     projectIds: so.projects.map((p) => p.planningId),
     createdAt: so.createdAt.toISOString(),
@@ -30,9 +31,10 @@ export async function PATCH(
   const body = await req.json();
   const { id } = params;
 
-  const updateData: { name?: string; serviceOrderNo?: string | null; docusignUrl?: string | null } = {};
+  const updateData: { name?: string; serviceOrderNo?: string | null; color?: string | null; docusignUrl?: string | null } = {};
   if (body.name !== undefined) updateData.name = body.name;
   if (body.serviceOrderNo !== undefined) updateData.serviceOrderNo = body.serviceOrderNo || null;
+  if (body.color !== undefined) updateData.color = body.color || null;
   if (body.docusignUrl !== undefined) updateData.docusignUrl = body.docusignUrl || null;
 
   if (body.addPlanningId) {
