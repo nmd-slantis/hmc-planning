@@ -18,10 +18,10 @@ Planning coordination tool between /slantis team and HMC Architects — merges O
 
 ## Open Tasks
 
+- [ ] **Turso migration** — run SQL to add new columns: `startDateManual`/`endDateManual` on ManualData; `address`/`contactName`/`contactEmail`/`notes` on OfficeOption; `docusignUrl` on ServiceOrder
 - [ ] Build user management admin UI (currently manual via Turso dashboard)
 - [ ] Month visibility toggle UI (currently `hidden: true` in `months.ts` only)
-- [ ] Verify SO column returns human-readable name (currently numeric ID)
-- [ ] Add pencil (✎) edit trigger to Service Orders rows (currently click-to-edit via EditText)
+- [ ] Pipeline totals row — per-month total Hrs/FTE across all groups
 
 ---
 
@@ -36,6 +36,18 @@ npm run dev            # → http://localhost:3000
 ---
 
 ## Session Log
+
+### 2026-04-20 (session 2)
+- Offices tab (4th): `OfficesTable.tsx` CRUD; `OfficeOption` schema + `address`/`contactName`/`contactEmail`/`notes`; API routes; `LinkedProjectsCell` shows linked planning rows
+- Manual dates: editable Start/End in all tabs; breaks live Odoo sync; bold when manual; ⟳ hover resets to live; `startDateManual`/`endDateManual` flags on ManualData
+- Tab renames: "Planning" → "Pipeline", "Administration" → "Details"
+- DocuSign moved from Admin/Details row to Service Orders tab (per-SO modal URL editor)
+- Stage labels: `fetchDealPipelineStages()` fetches real labels from HubSpot `/crm/v3/pipelines/deals`; `hsStageLabel` on PlanningRow; StageCell shows e.g. "Appointment Scheduled"
+- Office column: replaced `OfficeDropdown` (inline CRUD) with clean `OfficeRelationCell` picker using pre-loaded offices
+- Date picker: `type="date"` → `type="text"` MM/DD/YYYY — consistent format, no locale jump
+- HubSpot/Odoo icons: `w-6 h-6` → `w-5 h-5`
+- Pipeline scroll fix: body `maxHeight` `calc(100vh - 260px)` in Pipeline (vs 220px in Details)
+- Multiple ESLint/TypeScript fixes for Vercel builds
 
 ### 2026-04-20
 - Added Service Orders third tab: Prisma models (`ServiceOrder` + `ServiceOrderProject`), API routes (GET/POST, PATCH/DELETE), full CRUD `ServiceOrdersTable` component
