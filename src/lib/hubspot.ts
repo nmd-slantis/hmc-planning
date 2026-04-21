@@ -96,6 +96,26 @@ export async function fetchHubspotDeals(): Promise<HubspotDeal[]> {
   return allDeals;
 }
 
+interface HubSpotPipelineStage { id: string; label: string; }
+interface HubSpotPipeline { id: string; stages: HubSpotPipelineStage[]; }
+
+export async function fetchDealPipelineStages(): Promise<Map<string, string>> {
+  try {
+    const data = await hs<{ results: HubSpotPipeline[] }>("/crm/v3/pipelines/deals", {
+      next: { revalidate: 3600 },
+    } as RequestInit);
+    const map = new Map<string, string>();
+    for (const pipeline of data.results ?? []) {
+      for (const stage of pipeline.stages ?? []) {
+        map.set(stage.id, stage.label);
+      }
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
 export async function fetchHubSpotPortalId(): Promise<number | null> {
   try {
     const data = await hs<{ portalId: number }>("/integrations/v1/me");

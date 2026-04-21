@@ -1,18 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { EditableCell } from "./EditableCell";
-import { OfficeDropdown } from "./OfficeDropdown";
 import { FileUploadCell } from "./FileUploadCell";
 import { SoRelationCell } from "./SoRelationCell";
 import { VISIBLE_MONTHS, hoursToFte, distributeHours } from "@/config/months";
-import type { PlanningRow, ServiceOrder } from "@/types/planning";
+import type { PlanningRow, ServiceOrder, Office } from "@/types/planning";
 
 interface ProjectRowProps {
   initialRow: PlanningRow;
   showMonths?: boolean;
   serviceOrders?: ServiceOrder[];
   linkedSos?: ServiceOrder[];
+  offices?: Office[];
   onSoLink?: (newSoId: string | null, oldSoId: string | null) => void;
 }
 
@@ -56,28 +57,109 @@ function HubSpotMark() {
   );
 }
 
-const HS_STAGE_MAP: Record<string, { label: string; cls: string }> = {
-  closedwon:                { label: "Closed Won",    cls: "bg-emerald-100 text-emerald-700" },
-  "969753704":              { label: "Closed Won",    cls: "bg-emerald-100 text-emerald-700" },
-  closedlost:               { label: "Closed Lost",   cls: "bg-rose-100 text-rose-600"       },
-  appointmentscheduled:     { label: "Scheduled",     cls: "bg-blue-100 text-blue-700"       },
-  qualifiedtobuy:           { label: "Qualified",     cls: "bg-blue-100 text-blue-700"       },
-  presentationscheduled:    { label: "Presentation",  cls: "bg-violet-100 text-violet-700"   },
-  decisionmakerboughtin:    { label: "Decision Maker",cls: "bg-violet-100 text-violet-700"   },
-  contractsent:             { label: "Contract Sent", cls: "bg-amber-100 text-amber-700"     },
+const HS_STAGE_COLORS: Record<string, string> = {
+  closedwon:             "bg-emerald-100 text-emerald-700",
+  "969753704":           "bg-emerald-100 text-emerald-700",
+  closedlost:            "bg-rose-100 text-rose-600",
+  appointmentscheduled:  "bg-blue-100 text-blue-700",
+  qualifiedtobuy:        "bg-blue-100 text-blue-700",
+  presentationscheduled: "bg-violet-100 text-violet-700",
+  decisionmakerboughtin: "bg-violet-100 text-violet-700",
+  contractsent:          "bg-amber-100 text-amber-700",
 };
 
-function StageCell({ stageId }: { stageId: string | null }) {
-  if (!stageId) return <span className="text-gray-400">—</span>;
-  const entry = HS_STAGE_MAP[stageId];
-  if (entry) {
-    return (
-      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${entry.cls}`}>
-        {entry.label}
-      </span>
-    );
-  }
-  return <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600">{stageId}</span>;
+function StageCell({ stageId, stageLabel }: { stageId: string | null; stageLabel: string | null }) {
+  const label = stageLabel;
+  if (!label) return <span className="text-gray-400">—</span>;
+  const cls = stageId ? (HS_STAGE_COLORS[stageId] ?? "bg-gray-100 text-gray-600") : "bg-gray-100 text-gray-600";
+  return (
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
+function OfficeRelationCell({ rowId, offices, value, onSaved }: {
+  rowId: string;
+  offices: Office[];
+  value: string | null;
+  onSaved: (v: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [panelPos, setPanelPos] = useState({ top: 0, left: 0, width: 0 });
+  const [mounted, setMounted] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { if (open) setTimeout(() => searchRef.current?.focus(), 0); }, [open]);
+
+  const filtered = offices.filter((o) =>
+    !search || o.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const openPanel = () => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (rect) setPanelPos({ top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 200) });
+    setOpen(true);
+  };
+
+  const close = () => { setOpen(false); setSearch(""); };
+
+  const select = async (label: string | null) => {
+    onSaved(label);
+    close();
+    await fetch(`/api/planning/${rowId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ office: label }),
+    });
+  };
+
+  const panel = open && (
+    <div
+      style={{ position: "fixed", top: panelPos.top, left: panelPos.left, minWidth: panelPos.width, zIndex: 200 }}
+      className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden"
+    >
+      <div className="p-2 border-b border-gray-100">
+        <input ref={searchRef} value={search} onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search offices…"
+          className="w-full text-xs px-2 py-1.5 border border-gray-200 rounded-lg outline-none focus:border-[#FF7700]" />
+      </div>
+      <div className="max-h-52 overflow-y-auto py-1">
+        {value && (
+          <button onClick={() => select(null)} className="w-full text-left px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-50">
+            — Clear
+          </button>
+        )}
+        {filtered.length === 0 && (
+          <div className="px-3 py-1.5 text-xs text-gray-400">{offices.length === 0 ? "No offices yet" : "No results"}</div>
+        )}
+        {filtered.map((o) => (
+          <button key={o.id} onClick={() => select(o.label)}
+            className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2 ${value === o.label ? "text-[#FF7700]" : "text-gray-700"}`}>
+            <span className="w-3 flex-shrink-0 text-[10px]">{value === o.label ? "✓" : ""}</span>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <button ref={triggerRef} onClick={open ? close : openPanel}
+        className="w-full flex items-center gap-1 text-xs text-left group">
+        <span className={`flex-1 truncate ${value ? "text-gray-700" : "text-gray-400"}`}>{value ?? "—"}</span>
+        <span className="text-gray-400 flex-shrink-0 text-[10px] group-hover:text-gray-600">▾</span>
+      </button>
+      {mounted && createPortal(
+        <>{open && <div className="fixed inset-0 z-[199]" onMouseDown={close} />}{panel}</>,
+        document.body
+      )}
+    </>
+  );
 }
 
 function EditableDateCell({
@@ -94,11 +176,20 @@ function EditableDateCell({
   onSaved: (v: string | null, manual: boolean) => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value ?? "");
+  const [draft, setDraft] = useState("");
+
+  // Parse MM/DD/YYYY → YYYY-MM-DD; returns null if invalid
+  const parseDisplay = (s: string): string | null => {
+    const [m, d, y] = s.split("/");
+    if (!m || !d || !y || y.length !== 4) return null;
+    const iso = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+    return isNaN(Date.parse(iso)) ? null : iso;
+  };
 
   const commit = async () => {
     setEditing(false);
-    const v = draft || null;
+    const iso = parseDisplay(draft);
+    const v = iso ?? null;
     if (v === value) return;
     await fetch(`/api/planning/${rowId}`, {
       method: "PATCH",
@@ -122,16 +213,17 @@ function EditableDateCell({
   if (editing) {
     return (
       <input
-        type="date"
+        type="text"
         autoFocus
         value={draft}
+        placeholder="MM/DD/YYYY"
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
           if (e.key === "Enter") commit();
-          if (e.key === "Escape") { setDraft(value ?? ""); setEditing(false); }
+          if (e.key === "Escape") setEditing(false);
         }}
-        className="outline-none bg-white border border-[#FF7700] rounded px-1 py-0.5 text-xs w-28"
+        className="outline-none bg-white border border-[#FF7700] rounded px-1 py-0.5 text-xs w-24 placeholder:text-gray-300"
       />
     );
   }
@@ -139,7 +231,7 @@ function EditableDateCell({
   return (
     <span className="inline-flex items-center gap-1 group/date">
       <button
-        onClick={() => { setDraft(value ?? ""); setEditing(true); }}
+        onClick={() => { setDraft(fmtDate(value) ?? ""); setEditing(true); }}
         className={`text-left text-xs text-gray-700 hover:text-[#FF7700] transition-colors whitespace-nowrap ${isManual ? "font-bold" : ""}`}
         title={isManual ? "Manually set — click to edit" : "Click to edit"}
       >
@@ -158,7 +250,7 @@ function EditableDateCell({
   );
 }
 
-export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], linkedSos = [], onSoLink }: ProjectRowProps) {
+export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], linkedSos = [], offices = [], onSoLink }: ProjectRowProps) {
   const [row, setRow] = useState<PlanningRow>(initialRow);
 
   const updateField = <K extends keyof PlanningRow>(key: K, value: PlanningRow[K]) =>
@@ -188,7 +280,7 @@ export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], 
                 href={row.hsUrl ?? undefined}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FF7A59] hover:opacity-80 transition-opacity"
+                className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#FF7A59] hover:opacity-80 transition-opacity"
                 title={row.hsUrl ? "Open Deal in HubSpot" : "HubSpot deal"}
                 onClick={(e) => !row.hsUrl && e.preventDefault()}
               >
@@ -201,7 +293,7 @@ export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], 
               href={row.odooSoUrl ?? undefined}
               target="_blank"
               rel="noopener noreferrer"
-              className={`inline-flex items-center justify-center w-6 h-6 rounded-full transition-opacity ${
+              className={`inline-flex items-center justify-center w-5 h-5 rounded-full transition-opacity ${
                 row.odooSoUrl
                   ? "bg-[#714B67] hover:opacity-80"
                   : row.so
@@ -215,7 +307,7 @@ export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], 
             </a>
           </td>
           <td className="px-2 py-1">
-            <StageCell stageId={row.hsStage} />
+            <StageCell stageId={row.hsStage} stageLabel={row.hsStageLabel} />
           </td>
         </>
       )}
@@ -289,8 +381,9 @@ export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], 
       {/* Admin-only: Office (after Approved) */}
       {!showMonths && (
         <td className="px-2 py-1">
-          <OfficeDropdown
+          <OfficeRelationCell
             rowId={row.id}
+            offices={offices}
             value={row.office}
             onSaved={(v) => updateField("office", v)}
           />

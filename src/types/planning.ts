@@ -35,8 +35,9 @@ export interface PlanningRow {
   so: string | null;          // Sales Order number (Odoo only)
   monthlyData: Record<string, number>;  // { "aug-25": 80, "sep-25": 172, ... } hours
   status: RowStatus;
-  hsPipeline: string | null;  // HubSpot pipeline ID (hubspot rows only)
-  hsStage: string | null;     // HubSpot dealstage ID (hubspot rows only)
+  hsPipeline: string | null;    // HubSpot pipeline ID (hubspot rows only)
+  hsStage: string | null;       // HubSpot dealstage ID (hubspot rows only)
+  hsStageLabel: string | null;  // HubSpot dealstage display label (hubspot rows only)
   hsUrl: string | null;       // Direct link to the HubSpot deal (hubspot rows only)
   odooSoUrl: string | null;   // Direct link to the Odoo Sales Order (odoo rows only)
   comments: string | null;

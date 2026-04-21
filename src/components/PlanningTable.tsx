@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { VISIBLE_MONTHS, hoursToFte, distributeHours } from "@/config/months";
 import { ProjectRow } from "./ProjectRow";
-import type { PlanningRow, ServiceOrder } from "@/types/planning";
+import type { PlanningRow, ServiceOrder, Office } from "@/types/planning";
 
 function SearchIcon() {
   return (
@@ -17,6 +17,7 @@ interface PlanningTableProps {
   initialRows: PlanningRow[];
   showMonths?: boolean;
   serviceOrders?: ServiceOrder[];
+  offices?: Office[];
   soByPlanningId?: Map<string, ServiceOrder[]>;
   onSoLink?: (planningId: string, newSoId: string | null, oldSoId: string | null) => void;
 }
@@ -69,7 +70,7 @@ function TableColgroup({ showMonths }: { showMonths: boolean }) {
 const PLANNING_TABLE_STYLE: React.CSSProperties = { tableLayout: "fixed", width: "100%", borderCollapse: "collapse" };
 const ADMIN_TABLE_STYLE: React.CSSProperties    = { tableLayout: "fixed", width: "100%", minWidth: `${ADMIN_TOTAL}px`, borderCollapse: "collapse" };
 
-export function PlanningTable({ initialRows, showMonths = true, serviceOrders = [], soByPlanningId, onSoLink }: PlanningTableProps) {
+export function PlanningTable({ initialRows, showMonths = true, serviceOrders = [], offices = [], soByPlanningId, onSoLink }: PlanningTableProps) {
   const [searchOpen, setSearchOpen]   = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -332,7 +333,7 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
       <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
         <div
           ref={bodyScrollRef}
-          style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 220px)" }}
+          style={{ overflowX: "auto", overflowY: "auto", maxHeight: showMonths ? "calc(100vh - 260px)" : "calc(100vh - 220px)" }}
         >
           <div style={{ width: "100%", minWidth: TABLE_MIN_WIDTH, paddingBottom: "8px" }}>
 
@@ -395,6 +396,7 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
                           initialRow={row}
                           showMonths={showMonths}
                           serviceOrders={serviceOrders}
+                          offices={offices}
                           linkedSos={soByPlanningId?.get(row.id) ?? []}
                           onSoLink={(newSoId, oldSoId) => onSoLink?.(row.id, newSoId, oldSoId)}
                         />
