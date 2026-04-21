@@ -191,9 +191,8 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
     ? initialRows.filter((r) => {
         if (r.group === "Closed Lost" && !r.so) return false;
         if (r.hsStageLabel && ACTIVE_HIDDEN_LABELS.includes(r.hsStageLabel)) return false;
-        if (r.hsStage !== "988280923") return true;
-        const end = r.endDate ? new Date(r.endDate) : null;
-        return end !== null && end >= today;
+        if (!r.so && r.endDate && new Date(r.endDate).getFullYear() <= 2025) return false;
+        return true;
       })
     : initialRows;
 
