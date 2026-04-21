@@ -131,9 +131,14 @@ export function PlanningTable({ initialRows, showMonths = true, serviceOrders = 
     const body   = bodyScrollRef.current;
     const header = headerScrollRef.current;
     if (!body || !header) return;
-    const sync = () => { header.scrollLeft = body.scrollLeft; };
-    body.addEventListener("scroll", sync, { passive: true });
-    return () => body.removeEventListener("scroll", sync);
+    const syncFromBody   = () => { header.scrollLeft = body.scrollLeft; };
+    const syncFromHeader = () => { body.scrollLeft = header.scrollLeft; };
+    body.addEventListener("scroll",   syncFromBody,   { passive: true });
+    header.addEventListener("scroll", syncFromHeader, { passive: true });
+    return () => {
+      body.removeEventListener("scroll",   syncFromBody);
+      header.removeEventListener("scroll", syncFromHeader);
+    };
   }, []);
 
   const fmtDate = (iso: string | null) => {
