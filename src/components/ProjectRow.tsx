@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { createPortal } from "react-dom";
+import React, { useState } from "react";
 import { EditableCell } from "./EditableCell";
 import { OfficeDropdown } from "./OfficeDropdown";
 import { FileUploadCell } from "./FileUploadCell";
@@ -32,15 +31,6 @@ function fmtDate(iso: string | null) {
   if (!iso) return "";
   const [y, m, d] = iso.split("-");
   return `${m}/${d}/${y}`;
-}
-
-function DocuSignMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" aria-hidden="true">
-      <path d="M3 15 Q6 10 9 15 Q12 20 15 15 L20 9" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="20.5" cy="8" r="2" fill="white" />
-    </svg>
-  );
 }
 
 function OdooMark() {
@@ -333,86 +323,6 @@ export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], 
   );
 }
 
-function DocuSignCell({ rowId, url, onSaved }: { rowId: string; url: string | null; onSaved: (v: string | null) => void }) {
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState(url ?? "");
-  const [saving, setSaving] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => { setMounted(true); }, []);
-  useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 0); }, [open]);
-
-  const openModal = () => { setDraft(url ?? ""); setOpen(true); };
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/planning/${rowId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ docusignUrl: draft.trim() || null }),
-      });
-      if (res.ok) { onSaved(draft.trim() || null); setOpen(false); }
-    } finally { setSaving(false); }
-  };
-
-  const modal = open && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
-      <div className="bg-white rounded-xl shadow-2xl p-5 w-96 flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#FFB500]">
-            <DocuSignMark />
-          </span>
-          <span className="font-semibold text-sm text-gray-800">DocuSign URL</span>
-        </div>
-        <input
-          ref={inputRef}
-          type="url"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setOpen(false); }}
-          placeholder="https://app.docusign.com/…"
-          className="text-sm border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-[#FFB500] focus:ring-1 focus:ring-[#FFB500] w-full"
-        />
-        <div className="flex items-center gap-2 justify-end">
-          {url && (
-            <button onClick={() => setDraft("")} className="text-xs text-rose-500 hover:text-rose-700 mr-auto">
-              Clear
-            </button>
-          )}
-          {url && (
-            <a href={url} target="_blank" rel="noopener noreferrer"
-              className="text-xs text-[#FFB500] hover:underline px-3 py-1.5 rounded-lg border border-[#FFB500]/40">
-              Open ↗
-            </a>
-          )}
-          <button onClick={() => setOpen(false)} className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200">
-            Cancel
-          </button>
-          <button onClick={save} disabled={saving}
-            className="text-xs font-medium bg-[#FFB500] text-white px-3 py-1.5 rounded-lg hover:opacity-90 disabled:opacity-50">
-            {saving ? "Saving…" : "Save"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <>
-      <button
-        onClick={openModal}
-        className={`inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FFB500] transition-opacity ${url ? "hover:opacity-80" : "opacity-30 hover:opacity-50"}`}
-        title={url ? "Edit DocuSign link" : "Add DocuSign link"}
-      >
-        <DocuSignMark />
-      </button>
-      {mounted && createPortal(modal, document.body)}
-    </>
-  );
-}
 
 function ApprovedCheckbox({ rowId, checked, onChange }: {
   rowId: string;

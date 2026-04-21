@@ -5,7 +5,6 @@ import type { ActiveTab } from "./HmcClientLayout";
 interface CollapsibleHeaderProps {
   email: string | null | undefined;
   today: string;
-  rowCount: number;
   signOut: () => Promise<void>;
   activeTab?: ActiveTab;
   onTabChange?: (tab: ActiveTab) => void;
@@ -18,7 +17,7 @@ const TAB_LABELS: Record<ActiveTab, string> = {
   "offices":       "Offices",
 };
 
-export function CollapsibleHeader({ email, today, rowCount, signOut, activeTab, onTabChange }: CollapsibleHeaderProps) {
+export function CollapsibleHeader({ email, today, signOut, activeTab, onTabChange }: CollapsibleHeaderProps) {
   return (
     <header className="bg-[#202022] text-white shadow-md">
       <div className="px-6 flex items-center justify-between" style={{ minHeight: "44px" }}>
