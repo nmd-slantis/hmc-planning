@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import type { Office, PlanningRow } from "@/types/planning";
 import { chipTextColor } from "@/lib/color";
 
@@ -15,7 +15,22 @@ interface OfficesTableProps {
 function ColorPickerCell({ color, onSave }: { color: string | null; onSave: (v: string) => void }) {
   const [local, setLocal] = useState(color ?? "#6b7280");
   const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => { setLocal(color ?? "#6b7280"); }, [color]);
+  const pendingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!pendingRef.current) setLocal(color ?? "#6b7280");
+  }, [color]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setLocal(v);
+    if (pendingRef.current) clearTimeout(pendingRef.current);
+    pendingRef.current = setTimeout(() => {
+      pendingRef.current = null;
+      onSave(v);
+    }, 700);
+  };
+
   return (
     <div className="flex items-center justify-center">
       <button type="button" onClick={() => ref.current?.click()}
@@ -23,8 +38,7 @@ function ColorPickerCell({ color, onSave }: { color: string | null; onSave: (v: 
         className="w-5 h-5 rounded-full border-2 hover:scale-110 transition-transform flex-shrink-0"
         style={{ backgroundColor: local, borderColor: color ? local : "#d1d5db" }} />
       <input ref={ref} type="color" value={local}
-        onChange={(e) => setLocal(e.target.value)}
-        onBlur={(e) => onSave(e.target.value)}
+        onChange={handleChange}
         className="sr-only" aria-hidden />
     </div>
   );

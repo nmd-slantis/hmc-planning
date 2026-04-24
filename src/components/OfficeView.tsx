@@ -300,18 +300,27 @@ export function OfficeView({ initialRows, serviceOrders = [], offices = [], soBy
     });
   };
 
-  // Group by office
-  const officeLabels = Array.from(new Set(filtered.map(r => r.office ?? null)));
+  // Separate canceled rows — they go into the dedicated "Lost" group
+  const canceledRows = sortRows(filtered.filter(r => r.group === "Canceled"));
+  const nonCanceledFiltered = filtered.filter(r => r.group !== "Canceled");
+
+  // Group non-canceled by office
+  const officeLabels = Array.from(new Set(nonCanceledFiltered.map(r => r.office ?? null)));
   const sortedLabels = [
     ...officeLabels.filter(l => l !== null).sort((a, b) => (a ?? "").localeCompare(b ?? "")),
     ...(officeLabels.includes(null) ? [null] : []),
   ];
 
-  const groups = sortedLabels.map((label) => ({
-    label: label ?? "No Office",
-    officeLabel: label,
-    rows: sortRows(filtered.filter(r => (r.office ?? null) === label)),
-  }));
+  const groups: Array<{ label: string; officeLabel: string | null; rows: PlanningRow[]; isLost?: boolean }> =
+    sortedLabels.map((label) => ({
+      label: label ?? "No Office",
+      officeLabel: label,
+      rows: sortRows(nonCanceledFiltered.filter(r => (r.office ?? null) === label)),
+    }));
+
+  if (canceledRows.length > 0) {
+    groups.push({ label: "Lost", officeLabel: null, rows: canceledRows, isLost: true });
+  }
 
   if (initialRows.length === 0) {
     return (
@@ -484,10 +493,11 @@ export function OfficeView({ initialRows, serviceOrders = [], offices = [], soBy
           style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 292px)" }}
         >
           <div style={{ width: "100%", minWidth: TABLE_MIN_WIDTH, paddingBottom: "8px" }}>
-            {groups.map(({ label, officeLabel, rows }, gi) => {
+            {groups.map(({ label, officeLabel, rows, isLost }, gi) => {
               if (rows.length === 0) return null;
-              const office = offices.find(o => o.label === officeLabel);
-              const officeColor = office?.color ?? "#6b7280";
+              const officeColor = isLost
+                ? "#9f1239"
+                : (offices.find(o => o.label === officeLabel)?.color ?? "#6b7280");
               const isCollapsed = collapsed[label] ?? true;
 
               // Group month totals
