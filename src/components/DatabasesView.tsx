@@ -14,12 +14,13 @@ interface DatabasesViewProps {
   onOfficeUpdate: (updated: Office) => void;
   onOfficeCreate: (created: Office) => void;
   onOfficeDelete: (id: number) => void;
+  onOfficesRefresh?: (offices: Office[]) => void;
 }
 
 export function DatabasesView({
   serviceOrders, offices, planningRows,
   onSoUpdate, onSoCreate, onSoDelete,
-  onOfficeUpdate, onOfficeCreate, onOfficeDelete,
+  onOfficeUpdate, onOfficeCreate, onOfficeDelete, onOfficesRefresh,
 }: DatabasesViewProps) {
   return (
     <div className="flex flex-col gap-8">
@@ -45,6 +46,7 @@ export function DatabasesView({
           onUpdate={onOfficeUpdate}
           onCreate={onOfficeCreate}
           onDelete={onOfficeDelete}
+          onOfficesRefresh={onOfficesRefresh}
         />
       </section>
     </div>

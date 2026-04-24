@@ -86,6 +86,7 @@ export function HmcClientLayout({
             onOfficeUpdate={(updated) => setOffices((prev) => prev.map((o) => (o.id === updated.id ? updated : o)))}
             onOfficeCreate={handleOfficeCreate}
             onOfficeDelete={(id) => setOffices((prev) => prev.filter((o) => o.id !== id))}
+            onOfficesRefresh={(updated) => setOffices([...updated].sort((a, b) => a.label.localeCompare(b.label)))}
           />
         ) : activeTab === "office" ? (
           <OfficeView

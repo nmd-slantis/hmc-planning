@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { randomBrandColor } from "@/lib/brand-colors";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
   const option = await prisma.officeOption.create({
     data: {
       label: label.trim(),
-      color: color || null,
+      color: color || randomBrandColor(),
       address: address?.trim() || null,
       contactName: contactName?.trim() || null,
       contactEmail: contactEmail?.trim() || null,

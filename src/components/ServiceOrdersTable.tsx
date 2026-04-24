@@ -221,6 +221,7 @@ export function ServiceOrdersTable({
           <col style={{ width: "280px" }} />
           <col style={{ width: "50px" }} />
           <col />
+          <col style={{ width: "16px" }} />{/* gutter */}
         </colgroup>
         <thead>
           <tr className="bg-[#2e2e30] text-gray-300 text-[10px] tracking-wider uppercase select-none" style={{ height: "36px" }}>
@@ -234,6 +235,7 @@ export function ServiceOrdersTable({
               </svg>
             </th>
             <th className="px-4 py-2.5 text-left font-medium">Project / Deal</th>
+            <th className="p-0" />
           </tr>
           <tr className="bg-[#111113]" style={{ height: "28px" }}>
             <th className="px-1 py-0.5" />
@@ -250,12 +252,13 @@ export function ServiceOrdersTable({
               <input value={filters.project} onChange={sf("project")} placeholder="Project…"
                 className="w-full bg-transparent text-gray-400 text-[10px] outline-none placeholder:text-gray-700 border-b border-transparent focus:border-gray-600" />
             </th>
+            <th className="p-0" />
           </tr>
         </thead>
         <tbody>
           {serviceOrders.length === 0 && !creating && (
             <tr>
-              <td colSpan={5} className="px-4 py-10 text-center text-xs text-gray-400">
+              <td colSpan={6} className="px-4 py-10 text-center text-xs text-gray-400">
                 No service orders yet — click the button below to add one.
               </td>
             </tr>
@@ -311,6 +314,7 @@ export function ServiceOrdersTable({
                   onLink={(newIds) => onUpdate({ ...so, projectIds: newIds })}
                 />
               </td>
+              <td className="p-0" />
             </tr>
           ))}
 
@@ -362,6 +366,7 @@ export function ServiceOrdersTable({
                   </button>
                 </div>
               </td>
+              <td className="p-0" />
             </tr>
           )}
         </tbody>

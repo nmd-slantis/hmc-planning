@@ -10,6 +10,7 @@ interface OfficesTableProps {
   onUpdate: (updated: Office) => void;
   onCreate: (created: Office) => void;
   onDelete: (id: number) => void;
+  onOfficesRefresh?: (offices: Office[]) => void;
 }
 
 function ColorPickerCell({ color, onSave }: { color: string | null; onSave: (v: string) => void }) {
@@ -121,7 +122,7 @@ function LinkedProjectsCell({ officeLabelOrNew, planningRows }: { officeLabelOrN
   );
 }
 
-export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDelete }: OfficesTableProps) {
+export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDelete, onOfficesRefresh }: OfficesTableProps) {
   const [filters, setFilters] = useState({ label: "", address: "", contact: "", email: "", notes: "" });
   const sf = (k: keyof typeof filters) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setFilters((p) => ({ ...p, [k]: e.target.value }));
@@ -132,6 +133,7 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
   const [newEmail, setNewEmail] = useState("");
   const [newNotes, setNewNotes] = useState("");
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [seeding, setSeeding] = useState(false);
 
   const handleCreate = async () => {
     if (!newLabel.trim()) return;
@@ -169,46 +171,62 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
     setDeleting(null);
   };
 
+  const handleSeedColors = async () => {
+    setSeeding(true);
+    try {
+      const res = await fetch("/api/offices/seed-colors", { method: "POST" });
+      if (res.ok) {
+        const updated: Office[] = await res.json();
+        onOfficesRefresh?.(updated);
+      }
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   return (
     <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
       <table className="w-full text-xs" style={{ tableLayout: "fixed", borderCollapse: "collapse" }}>
         <colgroup>
           <col style={{ width: "40px" }} />
-          <col style={{ width: "40px" }} />{/* color */}
           <col style={{ width: "180px" }} />
           <col style={{ width: "200px" }} />
           <col style={{ width: "160px" }} />
           <col style={{ width: "180px" }} />
           <col style={{ width: "200px" }} />
+          <col style={{ width: "40px" }} />{/* color */}
           <col />
+          <col style={{ width: "16px" }} />{/* gutter */}
         </colgroup>
         <thead>
           <tr className="bg-[#2e2e30] text-gray-300 text-[10px] tracking-wider uppercase select-none" style={{ height: "36px" }}>
             <th className="px-2 py-2.5" />
-            <th className="px-2 py-2.5 text-center font-medium">Color</th>
             <th className="px-4 py-2.5 text-left font-medium">Office</th>
             <th className="px-4 py-2.5 text-left font-medium">Address</th>
             <th className="px-4 py-2.5 text-left font-medium">Contact</th>
             <th className="px-4 py-2.5 text-left font-medium">Email</th>
             <th className="px-4 py-2.5 text-left font-medium">Notes</th>
+            <th className="px-2 py-2.5 text-center font-medium">Color</th>
             <th className="px-4 py-2.5 text-left font-medium">Projects / Deals</th>
+            <th className="p-0" />
           </tr>
           <tr className="bg-[#111113]" style={{ height: "28px" }}>
             <th className="px-1 py-0.5" />
-            <th className="px-1 py-0.5" />{/* color */}
             {(["label","address","contact","email","notes"] as const).map((k) => (
               <th key={k} className="px-2 py-0.5">
                 <input value={filters[k]} onChange={sf(k)} placeholder="…"
                   className="w-full bg-transparent text-gray-400 text-[10px] outline-none placeholder:text-gray-700 border-b border-transparent focus:border-gray-600" />
               </th>
             ))}
+            <th className="px-1 py-0.5" />{/* color — no filter */}
             <th className="px-1 py-0.5" />
+            <th className="p-0" />
           </tr>
         </thead>
         <tbody>
           {offices.length === 0 && !creating && (
             <tr>
-              <td colSpan={8} className="px-4 py-10 text-center text-xs text-gray-400">
+              <td colSpan={9} className="px-4 py-10 text-center text-xs text-gray-400">
                 No offices yet — click the button below to add one.
               </td>
             </tr>
@@ -227,12 +245,6 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
                 >
                   ✕
                 </button>
-              </td>
-              <td className="px-2 py-2">
-                <ColorPickerCell
-                  color={office.color}
-                  onSave={(c) => handleUpdate(office.id, { color: c })}
-                />
               </td>
               <td className="px-4 py-2">
                 <EditText
@@ -270,9 +282,16 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
                   onSave={(v) => handleUpdate(office.id, { notes: v })}
                 />
               </td>
+              <td className="px-2 py-2">
+                <ColorPickerCell
+                  color={office.color}
+                  onSave={(c) => handleUpdate(office.id, { color: c })}
+                />
+              </td>
               <td className="px-4 py-2">
                 <LinkedProjectsCell officeLabelOrNew={office.label} planningRows={planningRows} />
               </td>
+              <td className="p-0" />
             </tr>
           ))}
 
@@ -287,7 +306,6 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
                   ✓
                 </button>
               </td>
-              <td className="px-2 py-2" />{/* color — set after saving */}
               <td className="px-4 py-2">
                 <input
                   autoFocus
@@ -334,6 +352,7 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
                   className="w-full outline-none bg-transparent border-b border-[#FF7700] text-xs px-0.5 py-0.5 placeholder:text-gray-400"
                 />
               </td>
+              <td className="px-2 py-2 text-center text-gray-400 text-[10px]">auto</td>
               <td className="px-4 py-2 text-gray-400 text-xs italic">
                 <div className="flex items-center gap-2">
                   <span>Projects link after saving</span>
@@ -345,17 +364,26 @@ export function OfficesTable({ offices, planningRows, onUpdate, onCreate, onDele
                   </button>
                 </div>
               </td>
+              <td className="p-0" />
             </tr>
           )}
         </tbody>
       </table>
 
-      <div className="border-t border-gray-100 px-4 py-2">
+      <div className="border-t border-gray-100 px-4 py-2 flex items-center gap-4">
         <button
           onClick={() => setCreating(true)}
           className="text-xs text-[#FF7700] hover:bg-orange-50 px-2 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
         >
           <span className="text-base leading-none">+</span> New office
+        </button>
+        <button
+          onClick={handleSeedColors}
+          disabled={seeding || offices.length === 0}
+          className="text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-50 px-2 py-1.5 rounded-lg flex items-center gap-1 transition-colors disabled:opacity-40"
+          title="Assign random brand colors to all offices"
+        >
+          {seeding ? "Assigning…" : "✦ Randomize colors"}
         </button>
       </div>
     </div>
