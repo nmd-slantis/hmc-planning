@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { VISIBLE_MONTHS, hoursToFte, distributeHours, getMonthWeekdaysForProject } from "@/config/months";
+import { VISIBLE_MONTHS, hoursToFte, distributeWithOverrides, getMonthWeekdaysForProject } from "@/config/months";
 import { SoRelationCell } from "./SoRelationCell";
 import { EditableCell } from "./EditableCell";
 import type { PlanningRow, ServiceOrder, Office } from "@/types/planning";
@@ -80,7 +80,7 @@ function OfficeRow({ row, serviceOrders, linkedSos, onSoLink, onSoCreate }: {
   const [comments, setComments] = useState(row.comments);
 
   const projectedMonthly = (row.soldHrs && row.startDate && row.endDate)
-    ? distributeHours(row.soldHrs, row.startDate, row.endDate, VISIBLE_MONTHS)
+    ? distributeWithOverrides(row.soldHrs, row.startDate, row.endDate, row.monthlyData ?? {}, VISIBLE_MONTHS)
     : {};
   const monthWeekdays = (row.startDate && row.endDate)
     ? getMonthWeekdaysForProject(row.startDate, row.endDate, VISIBLE_MONTHS)
@@ -264,7 +264,7 @@ export function OfficeView({ initialRows, serviceOrders = [], offices = [], soBy
         default: {
           if (VISIBLE_MONTHS.some(m => m.key === key)) {
             const hrs = (r.soldHrs && r.startDate && r.endDate)
-              ? (distributeHours(r.soldHrs, r.startDate, r.endDate, VISIBLE_MONTHS)[key] ?? 0)
+              ? (distributeWithOverrides(r.soldHrs, r.startDate, r.endDate, r.monthlyData ?? {}, VISIBLE_MONTHS)[key] ?? 0)
               : 0;
             return matchNum(hrs, q, key);
           }
@@ -281,7 +281,7 @@ export function OfficeView({ initialRows, serviceOrders = [], offices = [], soBy
       if (isMonthKey) {
         const getHrs = (row: PlanningRow) => {
           if (!row.soldHrs || !row.startDate || !row.endDate) return 0;
-          return distributeHours(row.soldHrs, row.startDate, row.endDate, VISIBLE_MONTHS)[sortKey] ?? 0;
+          return distributeWithOverrides(row.soldHrs, row.startDate, row.endDate, row.monthlyData ?? {}, VISIBLE_MONTHS)[sortKey] ?? 0;
         };
         const av = getHrs(a), bv = getHrs(b);
         const cmp = av < bv ? -1 : av > bv ? 1 : 0;
@@ -504,7 +504,7 @@ export function OfficeView({ initialRows, serviceOrders = [], offices = [], soBy
               const monthTotals: Record<string, number> = {};
               for (const row of rows) {
                 if (!row.soldHrs || !row.startDate || !row.endDate) continue;
-                const dist = distributeHours(row.soldHrs, row.startDate, row.endDate, VISIBLE_MONTHS);
+                const dist = distributeWithOverrides(row.soldHrs, row.startDate, row.endDate, row.monthlyData ?? {}, VISIBLE_MONTHS);
                 for (const [k, v] of Object.entries(dist)) {
                   monthTotals[k] = (monthTotals[k] ?? 0) + v;
                 }

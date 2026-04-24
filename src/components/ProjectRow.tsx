@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { EditableCell } from "./EditableCell";
 import { SoRelationCell } from "./SoRelationCell";
-import { VISIBLE_MONTHS, hoursToFte, distributeHours, getMonthWeekdaysForProject } from "@/config/months";
+import { VISIBLE_MONTHS, hoursToFte, distributeWithOverrides, getMonthWeekdaysForProject } from "@/config/months";
 import type { PlanningRow, ServiceOrder, Office } from "@/types/planning";
 import { chipTextColor } from "@/lib/color";
 
@@ -424,8 +424,88 @@ function EditableDateCell({
   );
 }
 
+function ManualMonthCell({
+  rowId,
+  monthKey,
+  hours,
+  isOverridden,
+  onSaved,
+}: {
+  rowId: string;
+  monthKey: string;
+  hours: number;
+  isOverridden: boolean;
+  onSaved: (monthKey: string, value: number | null) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const commit = async () => {
+    setEditing(false);
+    const parsed = draft === "" ? null : parseFloat(draft);
+    const v = parsed == null || isNaN(parsed) || parsed <= 0 ? null : parsed;
+    await fetch(`/api/planning/${rowId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ monthKey, monthHours: v }),
+    });
+    onSaved(monthKey, v);
+  };
+
+  const clear = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await fetch(`/api/planning/${rowId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ monthKey, monthHours: null }),
+    });
+    onSaved(monthKey, null);
+  };
+
+  if (editing) {
+    return (
+      <input
+        type="number"
+        autoFocus
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        className="outline-none bg-white border border-[#FF7700] rounded px-1 py-0.5 text-xs w-14 text-right"
+      />
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-0.5 group/mhrs justify-end w-full">
+      <button
+        onClick={() => { setDraft(hours > 0 ? String(hours) : ""); setEditing(true); }}
+        className={`text-right text-xs hover:text-[#FF7700] transition-colors ${isOverridden ? "font-bold text-gray-800" : "text-gray-700"}`}
+        title={isOverridden ? "Manually set — click to edit" : "Click to override"}
+      >
+        {hours > 0 ? hours : <span className="text-gray-200 group-hover/mhrs:text-gray-400">—</span>}
+      </button>
+      {isOverridden && (
+        <button
+          onClick={clear}
+          className="opacity-0 group-hover/mhrs:opacity-100 text-[9px] text-gray-400 hover:text-[#FF7700] transition-all leading-none"
+          title="Clear override — restore auto-distribution"
+        >
+          ⟳
+        </button>
+      )}
+    </span>
+  );
+}
+
 export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], linkedSos = [], offices = [], onSoLink, onSoCreate, onOfficeCreate, stageStyle, filterOverride, onFilterOverrideChange }: ProjectRowProps) {
   const [row, setRow] = useState<PlanningRow>(initialRow);
+  const [monthlyOverrides, setMonthlyOverrides] = useState<Record<string, number>>(
+    () => ({ ...(initialRow.monthlyData ?? {}) })
+  );
 
   const updateField = <K extends keyof PlanningRow>(key: K, value: PlanningRow[K]) =>
     setRow((prev) => ({ ...prev, [key]: value }));
@@ -433,7 +513,7 @@ export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], 
   const rowClass = GROUP_ROW_CLASS[row.group] ?? "bg-white border-gray-100";
 
   const projectedMonthly = (row.soldHrs && row.startDate && row.endDate)
-    ? distributeHours(row.soldHrs, row.startDate, row.endDate, VISIBLE_MONTHS)
+    ? distributeWithOverrides(row.soldHrs, row.startDate, row.endDate, monthlyOverrides, VISIBLE_MONTHS)
     : {};
 
   // Per-row weekdays for FTE: hours / (weekdays in month within project dates × 8)
@@ -590,6 +670,7 @@ export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], 
 
       {/* Planning-only: monthly columns */}
       {showMonths && VISIBLE_MONTHS.map((month, i) => {
+        const isOverridden = monthlyOverrides[month.key] != null;
         const hours = projectedMonthly[month.key] ?? 0;
         const wd = monthWeekdays[month.key] ?? 0;
         const fte = hours > 0 && wd > 0 ? hoursToFte(hours, wd * 8) : null;
@@ -603,7 +684,20 @@ export function ProjectRow({ initialRow, showMonths = true, serviceOrders = [], 
                 ? "border-l-2 border-gray-300"
                 : "border-l border-gray-100"
             }`}>
-              {hours > 0 ? hours : ""}
+              <ManualMonthCell
+                rowId={row.id}
+                monthKey={month.key}
+                hours={hours}
+                isOverridden={isOverridden}
+                onSaved={(key, value) => {
+                  setMonthlyOverrides((prev) => {
+                    const next = { ...prev };
+                    if (value == null) delete next[key];
+                    else next[key] = value;
+                    return next;
+                  });
+                }}
+              />
             </td>
             <td className="px-1 py-1 text-right text-gray-400 bg-gray-50/60 text-[10px]">
               {fte !== null ? fte.toFixed(1) : ""}

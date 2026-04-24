@@ -48,10 +48,11 @@ export async function PATCH(
 
   // Merge monthly update
   if (body.monthKey !== undefined && body.monthHours !== undefined) {
-    currentMonthly[body.monthKey] =
-      body.monthHours === "" || body.monthHours === null
-        ? 0
-        : Number(body.monthHours);
+    if (body.monthHours === "" || body.monthHours === null) {
+      delete currentMonthly[body.monthKey];
+    } else {
+      currentMonthly[body.monthKey] = Number(body.monthHours);
+    }
   }
 
   const data: Parameters<typeof prisma.manualData.upsert>[0]["create"] = {
