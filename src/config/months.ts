@@ -56,14 +56,19 @@ export function countWeekdays(start: Date, end: Date): number {
   return count;
 }
 
-/** Returns weekdays per month that fall within [startDate, endDate]. Used for per-row FTE. */
+/** Returns weekdays per month that fall within (startDate, endDate]. Used for per-row FTE.
+ *  Start date is treated as exclusive: the contract/kickoff date itself is not billed,
+ *  so billable days begin the day after startDate. */
 export function getMonthWeekdaysForProject(
   startDate: string,
   endDate: string,
   months: MonthConfig[],
 ): Record<string, number> {
   const projectStart = parseIsoDate(startDate);
-  const projectEnd   = parseIsoDate(endDate);
+  // Billable days start the day after the project start date
+  const billableStart = new Date(projectStart);
+  billableStart.setDate(billableStart.getDate() + 1);
+  const projectEnd = parseIsoDate(endDate);
   const result: Record<string, number> = {};
   for (const month of months) {
     const [abbrev, yy] = month.key.split("-");
@@ -72,8 +77,8 @@ export function getMonthWeekdaysForProject(
     const year = 2000 + parseInt(yy);
     const monthStart = new Date(year, m - 1, 1);
     const monthEnd   = new Date(year, m, 0);
-    const from = projectStart > monthStart ? projectStart : monthStart;
-    const to   = projectEnd   < monthEnd   ? projectEnd   : monthEnd;
+    const from = billableStart > monthStart ? billableStart : monthStart;
+    const to   = projectEnd    < monthEnd   ? projectEnd   : monthEnd;
     result[month.key] = from <= to ? countWeekdays(from, to) : 0;
   }
   return result;
