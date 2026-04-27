@@ -18,7 +18,8 @@ Planning coordination tool between /slantis team and HMC Architects — merges O
 
 ## Open Tasks
 
-_(none)_
+- **Details tab: sort by stage descending by default** — old/dead deals still showing at top; default sort should push them down
+- **Active filter: old deals still visible** — deals from before 2025 without SO still appearing; review active filter logic
 
 ---
 
@@ -33,6 +34,16 @@ npm run dev            # → http://localhost:3000
 ---
 
 ## Session Log
+
+### 2026-04-27
+- Office color picker fix — debounced `onChange` (700ms) replaces broken `onBlur` on hidden input
+- "Lost" group in Office tab — Canceled rows isolated in rose group at the bottom
+- Databases tab: color column after Notes; auto random brand color on new office; "Randomize colors" button (`POST /api/offices/seed-colors`)
+- Scrollbar gutter (16px) added to `ServiceOrdersTable` and `OfficesTable`
+- Manual month HRS override — click any month cell to override (bold when set, ⟳ to clear); `distributeWithOverrides` redistributes remaining hrs proportionally by weekday; API deletes key on null
+- Brand color picker panel — portal panel with 7 /slantis brand swatches + custom color section (localStorage, 20 max)
+- Brand colors corrected — actual /slantis palette: Orange #FF7700, Yellow #FFE900, Sky Blue #5BD9D6, Greenie #44C15D, Pinky #F479D1, Deep Purple #552497, Blackie #202022
+- FTE start-exclusive fix — `getMonthWeekdaysForProject` counts from `date_start + 1`; Hoover MS_CCDs Oct 25 → 1 workday → 1.0 FTE
 
 ### 2026-04-21
 - Filter enhancements: numeric toggle (= / ≥ / ≤) on Effort Hrs + per-month Hrs columns; multi-word AND matching on all text filters (split on space); month Hrs filter inputs in Planning tab
